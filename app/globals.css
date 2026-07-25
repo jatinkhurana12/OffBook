@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  border-radius: 0 !important;
+}
+
+html, body {
+  background-color: #EEEBE3;
+  color: #17181A;
+}
+
+body {
+  font-family: 'Public Sans', system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+::selection {
+  background: #C23B22;
+  color: #EEEBE3;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid #1F3FBF;
+  outline-offset: 2px;
+}
+
+.strike {
+  position: relative;
+  display: inline-block;
+}
+.strike::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 48%;
+  height: 3px;
+  background: #C23B22;
+  transform: rotate(-1.5deg);
+}
+
+.paper-texture {
+  background-image: radial-gradient(#00000008 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
