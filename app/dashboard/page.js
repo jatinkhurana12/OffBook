@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import VoteButtons from "../../components/VoteButtons";
 
 const DOMAINS = ["all", "consumer", "b2b", "fintech", "healthcare", "education", "climate", "other"];
 const SEVERITY_LABEL = {
@@ -80,12 +81,22 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="text-muted text-sm mt-2 line-clamp-2">{p.description}</p>
-                <div className="flex items-center gap-4 mt-4 text-xs text-muted font-medium">
+              </Link>
+              <div className="flex items-center justify-between mt-4 flex-wrap gap-3">
+                <div className="flex items-center gap-4 text-xs text-muted font-medium">
                   <span>by {p.author_name}</span>
                   <span className="uppercase font-display">{p.domain}</span>
-                  <span>{p.comment_count} {p.comment_count === 1 ? "reply" : "replies"}</span>
+                  <Link href={`/problems/${p.id}`} className="hover:text-pen">
+                    {p.comment_count} {p.comment_count === 1 ? "reply" : "replies"}
+                  </Link>
                 </div>
-              </Link>
+                <VoteButtons
+                  problemId={p.id}
+                  initialUpvotes={p.upvotes}
+                  initialDownvotes={p.downvotes}
+                  initialMyVote={p.my_vote}
+                />
+              </div>
             </li>
           ))}
         </ul>

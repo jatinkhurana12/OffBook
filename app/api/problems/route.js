@@ -5,16 +5,29 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const domain = searchParams.get("domain");
+  const session = getSession(); // optional here — logged-out visitors still see counts, just no highlighted vote
+
+  const args = [];
+  let myVoteSelect = "0 AS my_vote";
+  if (session) {
+    args.push(session.id);
+    myVoteSelect = `(
+      SELECT vote_type FROM problem_votes
+      WHERE problem_votes.problem_id = problems.id AND problem_votes.user_id = $${args.length}
+    ) AS my_vote`;
+  }
 
   let sql = `
     SELECT problems.*, users.name AS author_name,
-      (SELECT COUNT(*) FROM comments WHERE comments.problem_id = problems.id) AS comment_count
+      (SELECT COUNT(*) FROM comments WHERE comments.problem_id = problems.id) AS comment_count,
+      (SELECT COUNT(*) FROM problem_votes WHERE problem_votes.problem_id = problems.id AND vote_type = 1) AS upvotes,
+      (SELECT COUNT(*) FROM problem_votes WHERE problem_votes.problem_id = problems.id AND vote_type = -1) AS downvotes,
+      ${myVoteSelect}
     FROM problems JOIN users ON users.id = problems.user_id
   `;
-  const args = [];
   if (domain && domain !== "all") {
-    sql += " WHERE problems.domain = $1";
     args.push(domain);
+    sql += ` WHERE problems.domain = $${args.length}`;
   }
   sql += " ORDER BY problems.created_at DESC";
 

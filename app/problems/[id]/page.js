@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import VoteButtons from "../../../components/VoteButtons";
 
 export default function ProblemDetail() {
   const { id } = useParams();
@@ -56,9 +57,18 @@ export default function ProblemDetail() {
             Looking for: {problem.seeking}
           </p>
         )}
-        <p className="text-xs text-muted mt-4 font-medium">
-          Posted by {problem.author_name} · {new Date(problem.created_at).toLocaleDateString()}
-        </p>
+        <div className="flex items-center justify-between mt-5 pt-4 border-t border-line">
+          <p className="text-xs text-muted font-medium">
+            Posted by {problem.author_name} · {new Date(problem.created_at).toLocaleDateString()}
+          </p>
+          <VoteButtons
+            problemId={problem.id}
+            initialUpvotes={problem.upvotes}
+            initialDownvotes={problem.downvotes}
+            initialMyVote={problem.my_vote}
+            size="lg"
+          />
+        </div>
       </div>
 
       <h2 className="font-display text-sm uppercase tracking-widest text-muted mb-4">
