@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { validatePassword } from "../lib/validators";
 
 export default function AuthForm({ mode }) {
   const router = useRouter();
-  const params = useSearchParams();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [captcha, setCaptcha] = useState({ code: "", token: "" });
   const [captchaAnswer, setCaptchaAnswer] = useState("");
@@ -64,7 +63,7 @@ export default function AuthForm({ mode }) {
       refreshCaptcha();
       return;
     }
-    router.push(params.get("next") || "/dashboard");
+    router.push("/");
     router.refresh();
   }
 
