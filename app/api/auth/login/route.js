@@ -1,10 +1,16 @@
 const bcrypt = require("bcryptjs");
 const { query } = require("../../../../lib/db");
 const { createSessionCookie } = require("../../../../lib/auth");
+const { verifyCaptcha } = require("../../../../lib/captcha");
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
-  const { email, password } = await request.json();
+  const { email, password, captchaToken, captchaAnswer } = await request.json();
+
+  if (!verifyCaptcha(captchaToken, captchaAnswer)) {
+    return NextResponse.json({ error: "That captcha answer isn't right. Try the new one." }, { status: 400 });
+  }
+
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }

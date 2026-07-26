@@ -1,16 +1,23 @@
 const bcrypt = require("bcryptjs");
 const { query } = require("../../../../lib/db");
 const { createSessionCookie } = require("../../../../lib/auth");
+const { validatePassword } = require("../../../../lib/validators");
+const { verifyCaptcha } = require("../../../../lib/captcha");
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
-  const { name, email, password } = await request.json();
+  const { name, email, password, captchaToken, captchaAnswer } = await request.json();
+
+  if (!verifyCaptcha(captchaToken, captchaAnswer)) {
+    return NextResponse.json({ error: "That captcha answer isn't right. Try the new one." }, { status: 400 });
+  }
 
   if (!name || !email || !password) {
     return NextResponse.json({ error: "Name, email, and password are all required." }, { status: 400 });
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password needs to be at least 8 characters." }, { status: 400 });
+  const { valid, errors } = validatePassword(password);
+  if (!valid) {
+    return NextResponse.json({ error: errors[0] }, { status: 400 });
   }
 
   const cleanEmail = email.toLowerCase().trim();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { validatePassword } from "../lib/validators";
 
@@ -8,8 +8,25 @@ export default function AuthForm({ mode }) {
   const router = useRouter();
   const params = useSearchParams();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [captcha, setCaptcha] = useState({ question: "", token: "" });
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const refreshCaptcha = useCallback(async () => {
+    setCaptchaAnswer("");
+    try {
+      const res = await fetch("/api/captcha");
+      const data = await res.json();
+      setCaptcha(data);
+    } catch {
+      setCaptcha({ question: "", token: "" });
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshCaptcha();
+  }, [refreshCaptcha]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -28,12 +45,17 @@ export default function AuthForm({ mode }) {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        captchaToken: captcha.token,
+        captchaAnswer,
+      }),
     });
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
       setError(data.error || "Something went wrong.");
+      refreshCaptcha();
       return;
     }
     router.push(params.get("next") || "/dashboard");
@@ -59,6 +81,12 @@ export default function AuthForm({ mode }) {
         value={form.password}
         onChange={(v) => setForm({ ...form, password: v })}
         showRequirements={mode === "signup"}
+      />
+      <Captcha
+        question={captcha.question}
+        answer={captchaAnswer}
+        onAnswerChange={setCaptchaAnswer}
+        onRefresh={refreshCaptcha}
       />
       {error && (
         <p className="text-pen text-sm font-medium border-l-2 border-pen pl-3">{error}</p>
@@ -154,18 +182,18 @@ function PasswordField({ value, onChange, showRequirements }) {
       <span className="block font-display text-xs uppercase tracking-widest text-muted mb-2">
         Password
       </span>
-      <div className="relative">
+      <div className="flex border-2 border-ink bg-panel focus-within:border-pen">
         <input
           type={visible ? "text" : "password"}
           required
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full border-2 border-ink bg-panel px-4 py-2.5 pr-16 focus:outline-none focus:border-pen"
+          className="flex-1 min-w-0 px-4 py-2.5 bg-transparent focus:outline-none"
         />
         <button
           type="button"
-          onClick={() => setVisible(!visible)}
-          className="absolute right-0 top-0 h-full px-3 font-display text-[11px] uppercase tracking-wide text-muted hover:text-pen"
+          onClick={() => setVisible((v) => !v)}
+          className="shrink-0 border-l-2 border-ink px-4 font-display text-xs uppercase tracking-wide bg-panel text-ink hover:bg-ink hover:text-paper transition-colors"
         >
           {visible ? "Hide" : "Show"}
         </button>
@@ -175,14 +203,47 @@ function PasswordField({ value, onChange, showRequirements }) {
           {checks.map((c) => (
             <li
               key={c.label}
-              className={`text-xs flex items-center gap-1.5 ${c.met ? "text-sage" : "text-muted"}`}
+              className={`text-xs font-medium flex items-center gap-1.5 ${
+                c.met ? "text-sage" : "text-pen"
+              }`}
             >
-              <span className="font-display">{c.met ? "✓" : "·"}</span>
+              <span className="font-display">{c.met ? "✓" : "✕"}</span>
               {c.label}
             </li>
           ))}
         </ul>
       )}
+    </label>
+  );
+}
+
+function Captcha({ question, answer, onAnswerChange, onRefresh }) {
+  return (
+    <label className="block">
+      <span className="block font-display text-xs uppercase tracking-widest text-muted mb-2">
+        Quick check — you're human, right?
+      </span>
+      <div className="flex gap-3">
+        <div className="flex-1 border-2 border-ink bg-panel px-4 py-2.5 font-display text-base flex items-center justify-between">
+          <span>{question ? `${question} = ?` : "Loading..."}</span>
+          <button
+            type="button"
+            onClick={onRefresh}
+            title="Get a new question"
+            className="text-muted hover:text-pen text-xs font-display uppercase tracking-wide"
+          >
+            ↻ New
+          </button>
+        </div>
+        <input
+          type="number"
+          required
+          value={answer}
+          onChange={(e) => onAnswerChange(e.target.value)}
+          placeholder="?"
+          className="w-20 border-2 border-ink bg-panel px-3 py-2.5 text-center focus:outline-none focus:border-pen"
+        />
+      </div>
     </label>
   );
 }
