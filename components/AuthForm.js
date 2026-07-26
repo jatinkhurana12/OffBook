@@ -8,22 +8,28 @@ export default function AuthForm({ mode }) {
   const router = useRouter();
   const params = useSearchParams();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [captcha, setCaptcha] = useState({ question: "", token: "" });
+  const [captcha, setCaptcha] = useState({ code: "", token: "" });
   const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaLoadError, setCaptchaLoadError] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const refreshCaptcha = useCallback(async () => {
     setCaptchaAnswer("");
+    setCaptchaLoadError(false);
     try {
       const res = await fetch("/api/captcha");
+      if (!res.ok) throw new Error("bad response");
       const data = await res.json();
+      if (!data.code) throw new Error("no code in response");
       setCaptcha(data);
     } catch {
-      setCaptcha({ question: "", token: "" });
+      setCaptcha({ code: "", token: "" });
+      setCaptchaLoadError(true);
     }
   }, []);
 
+  // Get a fresh code whenever this form mounts (i.e. on every page load).
   useEffect(() => {
     refreshCaptcha();
   }, [refreshCaptcha]);
@@ -83,7 +89,8 @@ export default function AuthForm({ mode }) {
         showRequirements={mode === "signup"}
       />
       <Captcha
-        question={captcha.question}
+        code={captcha.code}
+        loadError={captchaLoadError}
         answer={captchaAnswer}
         onAnswerChange={setCaptchaAnswer}
         onRefresh={refreshCaptcha}
@@ -217,33 +224,44 @@ function PasswordField({ value, onChange, showRequirements }) {
   );
 }
 
-function Captcha({ question, answer, onAnswerChange, onRefresh }) {
+function Captcha({ code, loadError, answer, onAnswerChange, onRefresh }) {
   return (
     <label className="block">
       <span className="block font-display text-xs uppercase tracking-widest text-muted mb-2">
-        Quick check — you're human, right?
+        Type the code below
       </span>
-      <div className="flex gap-3">
-        <div className="flex-1 border-2 border-ink bg-panel px-4 py-2.5 font-display text-base flex items-center justify-between">
-          <span>{question ? `${question} = ?` : "Loading..."}</span>
-          <button
-            type="button"
-            onClick={onRefresh}
-            title="Get a new question"
-            className="text-muted hover:text-pen text-xs font-display uppercase tracking-wide"
-          >
-            ↻ New
-          </button>
+
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex-1 border-2 border-ink bg-ink text-paper px-4 py-3 font-display text-2xl tracking-[0.35em] text-center select-none">
+          {code || "······"}
         </div>
-        <input
-          type="number"
-          required
-          value={answer}
-          onChange={(e) => onAnswerChange(e.target.value)}
-          placeholder="?"
-          className="w-20 border-2 border-ink bg-panel px-3 py-2.5 text-center focus:outline-none focus:border-pen"
-        />
+        <button
+          type="button"
+          onClick={onRefresh}
+          title="Get a new code"
+          className="shrink-0 border-2 border-ink px-4 py-3 font-display text-sm hover:bg-ink hover:text-paper transition-colors"
+        >
+          ↻
+        </button>
       </div>
+
+      {loadError && (
+        <p className="text-pen text-xs font-medium mb-2">
+          Couldn't load a code. Click the ↻ button to try again.
+        </p>
+      )}
+
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={6}
+        required
+        value={answer}
+        onChange={(e) => onAnswerChange(e.target.value.replace(/\D/g, ""))}
+        placeholder="Enter the 6-digit code"
+        className="w-full border-2 border-ink bg-panel px-4 py-2.5 focus:outline-none focus:border-pen"
+      />
     </label>
   );
 }
