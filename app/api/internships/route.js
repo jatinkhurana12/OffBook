@@ -1,5 +1,5 @@
-const { query } = require("../../lib/db");
-const { getSession } = require("../../lib/auth");
+const { query } = require("../../../lib/db");
+const { getSession } = require("../../../lib/auth");
 import { NextResponse } from "next/server";
 
 export async function GET(request) {

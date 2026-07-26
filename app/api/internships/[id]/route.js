@@ -1,4 +1,4 @@
-const { query } = require("../../../lib/db");
+const { query } = require("../../../../lib/db");
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
