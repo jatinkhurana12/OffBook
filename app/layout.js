@@ -1,5 +1,6 @@
 import "./globals.css";
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 import { getSession } from "../lib/auth";
 
 export const metadata = {
@@ -12,9 +13,10 @@ export default function RootLayout({ children }) {
   const session = getSession();
   return (
     <html lang="en">
-      <body className="min-h-screen paper-texture">
+      <body className="min-h-screen paper-texture flex flex-col">
         <Nav session={session} />
-        <main>{children}</main>
+        <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );
