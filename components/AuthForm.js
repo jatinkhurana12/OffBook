@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { validatePassword } from "../lib/validators";
 
 export default function AuthForm({ mode }) {
   const router = useRouter();
@@ -13,6 +14,15 @@ export default function AuthForm({ mode }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+
+    if (mode === "signup") {
+      const { valid, errors } = validatePassword(form.password);
+      if (!valid) {
+        setError(errors[0]);
+        return;
+      }
+    }
+
     setLoading(true);
     const url = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
     const res = await fetch(url, {
@@ -45,12 +55,10 @@ export default function AuthForm({ mode }) {
         value={form.email}
         onChange={(v) => setForm({ ...form, email: v })}
       />
-      <Field
-        label="Password"
+      <PasswordField
         value={form.password}
         onChange={(v) => setForm({ ...form, password: v })}
-        type="password"
-        required
+        showRequirements={mode === "signup"}
       />
       {error && (
         <p className="text-pen text-sm font-medium border-l-2 border-pen pl-3">{error}</p>
@@ -83,7 +91,6 @@ function EmailField({ value, onChange }) {
   const username = atIndex === -1 ? value : value.slice(0, atIndex);
   const typedDomain = atIndex === -1 ? "" : value.slice(atIndex + 1);
 
-  // Only show suggestions once there's a username and an "@" has been typed.
   const suggestions =
     atIndex !== -1 && username.length > 0
       ? EMAIL_DOMAINS.filter((d) => d.startsWith(typedDomain)).slice(0, 5)
@@ -118,13 +125,60 @@ function EmailField({ value, onChange }) {
             <li key={domain}>
               <button
                 type="button"
-                // onMouseDown fires before the input's onBlur, so the click registers
                 onMouseDown={() => selectDomain(domain)}
                 className="w-full text-left px-4 py-2 text-sm hover:bg-ink hover:text-paper transition-colors"
               >
                 {username}
                 <span className="text-pen">@{domain}</span>
               </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </label>
+  );
+}
+
+function PasswordField({ value, onChange, showRequirements }) {
+  const [visible, setVisible] = useState(false);
+
+  const checks = [
+    { label: "9-12 characters", met: value.length >= 9 && value.length <= 12 },
+    { label: "One capital letter", met: /[A-Z]/.test(value) },
+    { label: "One number", met: /[0-9]/.test(value) },
+    { label: "One special character", met: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(value) },
+  ];
+
+  return (
+    <label className="block">
+      <span className="block font-display text-xs uppercase tracking-widest text-muted mb-2">
+        Password
+      </span>
+      <div className="relative">
+        <input
+          type={visible ? "text" : "password"}
+          required
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full border-2 border-ink bg-panel px-4 py-2.5 pr-16 focus:outline-none focus:border-pen"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible(!visible)}
+          className="absolute right-0 top-0 h-full px-3 font-display text-[11px] uppercase tracking-wide text-muted hover:text-pen"
+        >
+          {visible ? "Hide" : "Show"}
+        </button>
+      </div>
+      {showRequirements && (
+        <ul className="mt-2 space-y-1">
+          {checks.map((c) => (
+            <li
+              key={c.label}
+              className={`text-xs flex items-center gap-1.5 ${c.met ? "text-sage" : "text-muted"}`}
+            >
+              <span className="font-display">{c.met ? "✓" : "·"}</span>
+              {c.label}
             </li>
           ))}
         </ul>
