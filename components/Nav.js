@@ -12,6 +12,9 @@ export default function Nav({ session }) {
           <Link href="/dashboard" className="hover:text-pen">
             Problems
           </Link>
+          <Link href="/internships" className="hover:text-pen">
+            Internships
+          </Link>
           <Link href="/members" className="hover:text-pen">
             Directory
           </Link>
