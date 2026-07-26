@@ -41,12 +41,9 @@ export default function AuthForm({ mode }) {
           required
         />
       )}
-      <Field
-        label="Email"
+      <EmailField
         value={form.email}
         onChange={(v) => setForm({ ...form, email: v })}
-        type="email"
-        required
       />
       <Field
         label="Password"
@@ -66,6 +63,73 @@ export default function AuthForm({ mode }) {
         {loading ? "Working..." : mode === "signup" ? "Create account" : "Log in"}
       </button>
     </form>
+  );
+}
+
+const EMAIL_DOMAINS = [
+  "gmail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+  "icloud.com",
+  "rediffmail.com",
+  "protonmail.com",
+];
+
+function EmailField({ value, onChange }) {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const atIndex = value.indexOf("@");
+  const username = atIndex === -1 ? value : value.slice(0, atIndex);
+  const typedDomain = atIndex === -1 ? "" : value.slice(atIndex + 1);
+
+  // Only show suggestions once there's a username and an "@" has been typed.
+  const suggestions =
+    atIndex !== -1 && username.length > 0
+      ? EMAIL_DOMAINS.filter((d) => d.startsWith(typedDomain)).slice(0, 5)
+      : [];
+
+  function selectDomain(domain) {
+    onChange(`${username}@${domain}`);
+    setShowSuggestions(false);
+  }
+
+  return (
+    <label className="block relative">
+      <span className="block font-display text-xs uppercase tracking-widest text-muted mb-2">
+        Email
+      </span>
+      <input
+        type="email"
+        required
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setShowSuggestions(true);
+        }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
+        autoComplete="off"
+        className="w-full border-2 border-ink bg-panel px-4 py-2.5 focus:outline-none focus:border-pen"
+      />
+      {showSuggestions && suggestions.length > 0 && (
+        <ul className="absolute z-10 left-0 right-0 mt-1 border-2 border-ink bg-panel shadow-[3px_3px_0_0_#17181A]">
+          {suggestions.map((domain) => (
+            <li key={domain}>
+              <button
+                type="button"
+                // onMouseDown fires before the input's onBlur, so the click registers
+                onMouseDown={() => selectDomain(domain)}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-ink hover:text-paper transition-colors"
+              >
+                {username}
+                <span className="text-pen">@{domain}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </label>
   );
 }
 
