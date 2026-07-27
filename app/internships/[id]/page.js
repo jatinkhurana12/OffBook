@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function InternshipDetail() {
   const { id } = useParams();
+  const router = useRouter();
   const [internship, setInternship] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [myUserId, setMyUserId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch(`/api/internships/${id}`)
@@ -16,7 +21,23 @@ export default function InternshipDetail() {
       })
       .then((data) => setInternship(data.internship))
       .catch(() => setNotFound(true));
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((data) => setMyUserId(data.session ? data.session.id : null));
   }, [id]);
+
+  async function handleDelete() {
+    if (!window.confirm("Delete this opening? This can't be undone.")) return;
+    setDeleting(true);
+    const res = await fetch(`/api/internships/${id}`, { method: "DELETE" });
+    setDeleting(false);
+    if (res.ok) {
+      router.push("/internships");
+    } else {
+      const data = await res.json();
+      setError(data.error || "Couldn't delete this.");
+    }
+  }
 
   if (notFound) {
     return (
@@ -30,6 +51,8 @@ export default function InternshipDetail() {
     return <div className="max-w-2xl mx-auto px-5 py-12 text-muted text-sm">Loading...</div>;
   }
 
+  const isOwner = myUserId !== null && myUserId === internship.poster_id;
+
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
       <div className="border-2 border-ink bg-panel p-6">
@@ -38,8 +61,28 @@ export default function InternshipDetail() {
             <h1 className="font-display text-2xl font-bold leading-snug">{internship.role_title}</h1>
             <p className="text-muted mt-1">{internship.organization}</p>
           </div>
-          <PaymentBadge internship={internship} />
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <PaymentBadge internship={internship} />
+            {isOwner && (
+              <div className="flex items-center gap-3 text-xs font-display uppercase tracking-wide">
+                <Link href={`/internships/${id}/edit`} className="text-muted hover:text-ink">
+                  Edit
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="text-muted hover:text-pen disabled:opacity-50"
+                >
+                  {deleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {error && (
+          <p className="text-pen text-sm font-medium border-l-2 border-pen pl-3 mb-4">{error}</p>
+        )}
 
         <div className="flex items-center gap-4 text-xs text-muted font-medium mb-6">
           <span className="uppercase font-display">{internship.location}</span>

@@ -42,3 +42,45 @@ export async function GET(request, { params }) {
 
   return NextResponse.json({ problem, comments: commentsResult.rows });
 }
+
+export async function PUT(request, { params }) {
+  const session = getSession();
+  if (!session) return NextResponse.json({ error: "You need to log in first." }, { status: 401 });
+
+  const existing = await query("SELECT user_id FROM problems WHERE id = $1", [params.id]);
+  if (existing.rows.length === 0) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+  if (existing.rows[0].user_id !== session.id) {
+    return NextResponse.json({ error: "You can only edit your own posts." }, { status: 403 });
+  }
+
+  const { title, domain, severity, description, seeking } = await request.json();
+  if (!title || !description) {
+    return NextResponse.json({ error: "Title and description are required." }, { status: 400 });
+  }
+
+  await query(
+    `UPDATE problems SET title = $1, domain = $2, severity = $3, description = $4, seeking = $5
+     WHERE id = $6`,
+    [title.trim(), domain || "other", severity || "annoying", description.trim(), seeking || "", params.id]
+  );
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(request, { params }) {
+  const session = getSession();
+  if (!session) return NextResponse.json({ error: "You need to log in first." }, { status: 401 });
+
+  const existing = await query("SELECT user_id FROM problems WHERE id = $1", [params.id]);
+  if (existing.rows.length === 0) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+  if (existing.rows[0].user_id !== session.id) {
+    return NextResponse.json({ error: "You can only delete your own posts." }, { status: 403 });
+  }
+
+  await query("DELETE FROM problems WHERE id = $1", [params.id]);
+  return NextResponse.json({ ok: true });
+}
