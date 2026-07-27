@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const AVAILABILITY = ["exploring", "open-to-cofound", "already-building"];
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB, before base64 encoding
 
 export default function Profile() {
+  const router = useRouter();
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [avatarError, setAvatarError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -30,6 +35,45 @@ export default function Profile() {
     setTimeout(() => setSaved(false), 2500);
   }
 
+  function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarError("");
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Please choose an image file.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarError("Image is too large. Please choose one under 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((f) => ({ ...f, avatar_url: reader.result }));
+    };
+    reader.onerror = () => setAvatarError("Couldn't read that file. Try a different image.");
+    reader.readAsDataURL(file);
+  }
+
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm(
+      "Delete your account? This permanently removes your profile, problems, comments, votes, and internship posts. This can't be undone."
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    const res = await fetch("/api/profile", { method: "DELETE" });
+    if (res.ok) {
+      router.push("/");
+      router.refresh();
+    } else {
+      setDeleting(false);
+      alert("Something went wrong deleting your account. Please try again.");
+    }
+  }
+
   if (loading || !form) return <div className="max-w-2xl mx-auto px-5 py-12 text-muted text-sm">Loading...</div>;
 
   return (
@@ -38,6 +82,40 @@ export default function Profile() {
       <p className="text-muted text-sm mb-8">This is your build log — what you bring and what you've shipped.</p>
 
       <form onSubmit={handleSave} className="space-y-6">
+        <Field label="Profile picture">
+          <div className="flex items-center gap-4">
+            {form.avatar_url ? (
+              <img
+                src={form.avatar_url}
+                alt="Your profile picture"
+                className="w-20 h-20 object-cover border-2 border-ink"
+              />
+            ) : (
+              <div className="w-20 h-20 border-2 border-ink bg-panel flex items-center justify-center text-muted text-xs">
+                No photo
+              </div>
+            )}
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="text-sm"
+              />
+              {form.avatar_url && (
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, avatar_url: "" })}
+                  className="block mt-2 text-xs text-muted underline hover:text-pen"
+                >
+                  Remove photo
+                </button>
+              )}
+              {avatarError && <p className="text-xs text-red-600 mt-1">{avatarError}</p>}
+            </div>
+          </div>
+        </Field>
+
         <Field label="Headline">
           <input
             value={form.headline || ""}
@@ -124,6 +202,24 @@ export default function Profile() {
         </button>
         {saved && <span className="ml-4 text-sage text-sm font-medium">Saved.</span>}
       </form>
+
+      <div className="mt-16 border-t-2 border-line pt-8">
+        <h2 className="font-display text-sm uppercase tracking-widest text-muted mb-2">
+          Danger zone
+        </h2>
+        <p className="text-sm text-muted mb-4">
+          Deleting your account removes your profile, problems, comments, votes, and internship
+          posts. This can&apos;t be undone.
+        </p>
+        <button
+          type="button"
+          onClick={handleDeleteAccount}
+          disabled={deleting}
+          className="border-2 border-red-600 text-red-600 px-6 py-3 font-display text-sm uppercase tracking-wider hover:bg-red-600 hover:text-paper transition-colors disabled:opacity-50"
+        >
+          {deleting ? "Deleting..." : "Delete account"}
+        </button>
+      </div>
     </div>
   );
 }
