@@ -1,5 +1,5 @@
 const { query } = require("../../../lib/db");
-const { getSession, clearSessionCookie } = require("../../../lib/auth");
+const { getSession, clearSessionCookie, createSessionCookie } = require("../../../lib/auth");
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -21,6 +21,7 @@ export async function PUT(request) {
   if (!session) return NextResponse.json({ error: "You need to log in first." }, { status: 401 });
 
   const {
+    name
     headline,
     bio,
     left_because,
@@ -37,6 +38,16 @@ export async function PUT(request) {
   if (avatar_url && avatar_url.length > 2_800_000) {
     return NextResponse.json({ error: "Image is too large. Please use a smaller picture." }, { status: 400 });
   }
+
+  const cleanName = (name || "").trim();
+if (!cleanName) {
+  return NextResponse.json({ error: "Name can't be empty." }, { status: 400 });
+}
+if (cleanName.length > 80) {
+  return NextResponse.json({ error: "Name is too long. Please use 80 characters or fewer." }, { status: 400 });
+}
+
+await query("UPDATE users SET name = $1 WHERE id = $2", [cleanName, session.id]);
 
   await query(
     `UPDATE profiles SET headline = $1, bio = $2, left_because = $3, skills = $4,
@@ -68,6 +79,6 @@ export async function DELETE() {
   await query("DELETE FROM users WHERE id = $1", [session.id]);
 
   clearSessionCookie();
-
+  createSessionCookie({ id: session.id, name: cleanName, email: session.email });
   return NextResponse.json({ ok: true });
 }

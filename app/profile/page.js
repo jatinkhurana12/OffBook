@@ -12,6 +12,7 @@ export default function Profile() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [avatarError, setAvatarError] = useState("");
+  const [nameError, setNameError] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -23,18 +24,27 @@ export default function Profile() {
       });
   }, []);
 
-  async function handleSave(e) {
-    e.preventDefault();
-    setSaved(false);
-    await fetch("/api/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+ async function handleSave(e) {
+  e.preventDefault();
+  setSaved(false);
+  setNameError("");
+
+  const res = await fetch("/api/profile", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    setNameError(data.error || "Something went wrong saving your profile.");
+    return;
   }
 
+  setSaved(true);
+  setTimeout(() => setSaved(false), 2500);
+  router.refresh();
+}
   function handleAvatarChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -82,6 +92,16 @@ export default function Profile() {
       <p className="text-muted text-sm mb-8">This is your build log — what you bring and what you've shipped.</p>
 
       <form onSubmit={handleSave} className="space-y-6">
+        <Field label="Name">
+  <input
+    value={form.name || ""}
+    onChange={(e) => setForm({ ...form, name: e.target.value })}
+    placeholder="Your name"
+    maxLength={80}
+    className="w-full border-2 border-ink bg-panel px-4 py-2.5 focus:outline-none focus:border-pen"
+  />
+  {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
+</Field>
         <Field label="Profile picture">
           <div className="flex items-center gap-4">
  {form.avatar_url ? (
