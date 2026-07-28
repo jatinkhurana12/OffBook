@@ -24,7 +24,7 @@ export default function Nav({ session, avatarUrl }) {
               href="/profile"
               onClick={closeMenu}
               aria-label="Your profile"
-              className="shrink-0 block w-9 h-9 border-2 border-ink overflow-hidden"
+              className="shrink-0 block w-9 h-9 rounded-full border-2 border-ink overflow-hidden"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />

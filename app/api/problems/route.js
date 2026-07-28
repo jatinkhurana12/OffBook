@@ -17,14 +17,16 @@ export async function GET(request) {
     ) AS my_vote`;
   }
 
-  let sql = `
-    SELECT problems.*, users.name AS author_name,
-      (SELECT COUNT(*) FROM comments WHERE comments.problem_id = problems.id) AS comment_count,
-      (SELECT COUNT(*) FROM problem_votes WHERE problem_votes.problem_id = problems.id AND vote_type = 1) AS upvotes,
-      (SELECT COUNT(*) FROM problem_votes WHERE problem_votes.problem_id = problems.id AND vote_type = -1) AS downvotes,
-      ${myVoteSelect}
-    FROM problems JOIN users ON users.id = problems.user_id
-  `;
+ let sql = `
+     SELECT problems.*, users.name AS author_name, profiles.avatar_url AS author_avatar_url,
+       (SELECT COUNT(*) FROM comments WHERE comments.problem_id = problems.id) AS comment_count,
+       (SELECT COUNT(*) FROM problem_votes WHERE problem_votes.problem_id = problems.id AND vote_type = 1) AS upvotes,
+       (SELECT COUNT(*) FROM problem_votes WHERE problem_votes.problem_id = problems.id AND vote_type = -1) AS downvotes,
+       ${myVoteSelect}
+     FROM problems
+     JOIN users ON users.id = problems.user_id
+     LEFT JOIN profiles ON profiles.user_id = users.id
+   `;
   if (domain && domain !== "all") {
     args.push(domain);
     sql += ` WHERE problems.domain = $${args.length}`;

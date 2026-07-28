@@ -8,11 +8,13 @@ export async function GET(request) {
   const skill = (searchParams.get("skill") || "").trim().toLowerCase();
   const minPayment = searchParams.get("minPayment");
 
-  let sql = `
-    SELECT internships.*, users.name AS poster_name
-    FROM internships JOIN users ON users.id = internships.user_id
-    WHERE 1=1
-  `;
+let sql = `
+     SELECT internships.*, users.name AS poster_name, profiles.avatar_url AS poster_avatar_url
+     FROM internships
+     JOIN users ON users.id = internships.user_id
+     LEFT JOIN profiles ON profiles.user_id = users.id
+     WHERE 1=1
+   `;
   const args = [];
 
   if (paid === "true" || paid === "false") {

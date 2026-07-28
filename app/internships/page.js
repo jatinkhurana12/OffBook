@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Avatar from "../../components/Avatar";
 
 export default function Internships() {
   const [internships, setInternships] = useState([]);
@@ -116,8 +117,11 @@ export default function Internships() {
                 <p className="text-muted text-sm mt-3 line-clamp-2">{i.description}</p>
                 <div className="flex items-center gap-4 mt-4 text-xs text-muted font-medium flex-wrap">
                   <span className="uppercase font-display">{i.location}</span>
-                  {i.skills && <span>Needs: {i.skills}</span>}
-                  <span>Posted by {i.poster_name}</span>
+{i.skills && <span>Needs: {i.skills}</span>}
+                  <span className="flex items-center gap-2">
+                    <Avatar src={i.poster_avatar_url} name={i.poster_name} size="xs" />
+                    Posted by {i.poster_name}
+                  </span>
                 </div>
               </Link>
             </li>

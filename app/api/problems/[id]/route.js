@@ -3,12 +3,14 @@ const { getSession } = require("../../../../lib/auth");
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
-  const problemResult = await query(
-    `SELECT problems.*, users.name AS author_name, users.id AS author_id
-     FROM problems JOIN users ON users.id = problems.user_id
-     WHERE problems.id = $1`,
-    [params.id]
-  );
+const problemResult = await query(
+     `SELECT problems.*, users.name AS author_name, users.id AS author_id, profiles.avatar_url AS author_avatar_url
+      FROM problems
+      JOIN users ON users.id = problems.user_id
+      LEFT JOIN profiles ON profiles.user_id = users.id
+      WHERE problems.id = $1`,
+     [params.id]
+   );
   const problem = problemResult.rows[0];
   if (!problem) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
@@ -32,13 +34,15 @@ export async function GET(request, { params }) {
     problem.my_vote = myVoteResult.rows[0]?.vote_type || 0;
   }
 
-  const commentsResult = await query(
-    `SELECT comments.*, users.name AS author_name
-     FROM comments JOIN users ON users.id = comments.user_id
-     WHERE comments.problem_id = $1
-     ORDER BY comments.created_at ASC`,
-    [params.id]
-  );
+const commentsResult = await query(
+     `SELECT comments.*, users.name AS author_name, profiles.avatar_url AS author_avatar_url
+      FROM comments
+      JOIN users ON users.id = comments.user_id
+      LEFT JOIN profiles ON profiles.user_id = users.id
+      WHERE comments.problem_id = $1
+      ORDER BY comments.created_at ASC`,
+     [params.id]
+   );
 
   return NextResponse.json({ problem, comments: commentsResult.rows });
 }

@@ -5,11 +5,11 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const skill = (searchParams.get("skill") || "").trim().toLowerCase();
 
-  let sql = `
-    SELECT users.id, users.name, profiles.headline, profiles.skills, profiles.looking_for,
-           profiles.availability, profiles.left_because, profiles.shipped
-    FROM users JOIN profiles ON profiles.user_id = users.id
-  `;
+let sql = `
+     SELECT users.id, users.name, profiles.headline, profiles.skills, profiles.looking_for,
+            profiles.availability, profiles.left_because, profiles.shipped, profiles.avatar_url
+     FROM users JOIN profiles ON profiles.user_id = users.id
+   `;
   const args = [];
   if (skill) {
     sql += " WHERE LOWER(profiles.skills) LIKE $1";

@@ -84,17 +84,17 @@ export default function Profile() {
       <form onSubmit={handleSave} className="space-y-6">
         <Field label="Profile picture">
           <div className="flex items-center gap-4">
-            {form.avatar_url ? (
-              <img
-                src={form.avatar_url}
-                alt="Your profile picture"
-                className="w-20 h-20 object-cover border-2 border-ink"
-              />
-            ) : (
-              <div className="w-20 h-20 border-2 border-ink bg-panel flex items-center justify-center text-muted text-xs">
-                No photo
-              </div>
-            )}
+ {form.avatar_url ? (
+               <img
+                 src={form.avatar_url}
+                 alt="Your profile picture"
+                className="w-20 h-20 rounded-full object-cover border-2 border-ink"
+               />
+             ) : (
+              <div className="w-20 h-20 rounded-full border-2 border-ink bg-panel flex items-center justify-center text-muted text-xs">
+                 No photo
+               </div>
+             )}
             <div>
               <input
                 type="file"

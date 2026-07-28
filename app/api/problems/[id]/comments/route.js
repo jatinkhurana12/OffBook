@@ -17,13 +17,15 @@ export async function POST(request, { params }) {
     body.trim(),
   ]);
 
-  const result = await query(
-    `SELECT comments.*, users.name AS author_name
-     FROM comments JOIN users ON users.id = comments.user_id
-     WHERE comments.problem_id = $1
-     ORDER BY comments.created_at ASC`,
-    [params.id]
-  );
+const result = await query(
+     `SELECT comments.*, users.name AS author_name, profiles.avatar_url AS author_avatar_url
+      FROM comments
+      JOIN users ON users.id = comments.user_id
+      LEFT JOIN profiles ON profiles.user_id = users.id
+      WHERE comments.problem_id = $1
+      ORDER BY comments.created_at ASC`,
+     [params.id]
+   );
 
   return NextResponse.json({ ok: true, comments: result.rows });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Avatar from "../../components/Avatar";
 
 const AVAILABILITY_LABEL = {
   exploring: "Just exploring",
@@ -46,12 +47,15 @@ export default function Members() {
         <ul className="space-y-4">
           {members.map((m) => (
             <li key={m.id} className="border-2 border-ink bg-panel p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-display font-semibold text-lg">{m.name}</h2>
-                  {m.headline && <p className="text-sm text-muted mt-0.5">{m.headline}</p>}
+ <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <Avatar src={m.avatar_url} name={m.name} size="md" />
+                  <div>
+                    <h2 className="font-display font-semibold text-lg">{m.name}</h2>
+                    {m.headline && <p className="text-sm text-muted mt-0.5">{m.headline}</p>}
+                  </div>
                 </div>
-                <span className="font-display text-[11px] uppercase tracking-wide text-pen whitespace-nowrap">
+                 <span className="font-display text-[11px] uppercase tracking-wide text-pen whitespace-nowrap">
                   {AVAILABILITY_LABEL[m.availability] || m.availability}
                 </span>
               </div>

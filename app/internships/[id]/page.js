@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Avatar from "../../../components/Avatar";
 
 export default function InternshipDetail() {
   const { id } = useParams();
@@ -85,9 +86,12 @@ export default function InternshipDetail() {
         )}
 
         <div className="flex items-center gap-4 text-xs text-muted font-medium mb-6">
-          <span className="uppercase font-display">{internship.location}</span>
-          <span>Posted by {internship.poster_name}</span>
-          <span>{new Date(internship.created_at).toLocaleDateString()}</span>
+<span className="uppercase font-display">{internship.location}</span>
+          <span className="flex items-center gap-2">
+            <Avatar src={internship.poster_avatar_url} name={internship.poster_name} size="xs" />
+            Posted by {internship.poster_name}
+          </span>
+           <span>{new Date(internship.created_at).toLocaleDateString()}</span>
         </div>
 
         <p className="text-ink leading-relaxed whitespace-pre-wrap mb-6">{internship.description}</p>

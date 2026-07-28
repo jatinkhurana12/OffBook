@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import VoteButtons from "../../../components/VoteButtons";
+import Avatar from "../../../components/Avatar";
 
 export default function ProblemDetail() {
   const { id } = useParams();
@@ -96,10 +97,11 @@ export default function ProblemDetail() {
           </p>
         )}
         <div className="flex items-center justify-between mt-5 pt-4 border-t border-line">
-          <p className="text-xs text-muted font-medium">
-            Posted by {problem.author_name} · {new Date(problem.created_at).toLocaleDateString()}
-          </p>
-          <VoteButtons
+          <p className="flex items-center gap-2 text-xs text-muted font-medium">
+            <Avatar src={problem.author_avatar_url} name={problem.author_name} size="xs" />
+             Posted by {problem.author_name} · {new Date(problem.created_at).toLocaleDateString()}
+           </p>
+           <VoteButtons
             problemId={problem.id}
             initialUpvotes={problem.upvotes}
             initialDownvotes={problem.downvotes}
@@ -218,11 +220,12 @@ function CommentItem({ comment, problemId, isOwner, onUpdated }) {
         </div>
       ) : (
         <>
-          <p className="text-sm leading-relaxed">{comment.body}</p>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-xs text-muted font-medium">
-              {comment.author_name} · {new Date(comment.created_at).toLocaleDateString()}
-            </p>
+ <p className="text-sm leading-relaxed">{comment.body}</p>
+           <div className="flex items-center gap-3 mt-1">
+             <p className="flex items-center gap-2 text-xs text-muted font-medium">
+               <Avatar src={comment.author_avatar_url} name={comment.author_name} size="xs" />
+               {comment.author_name} · {new Date(comment.created_at).toLocaleDateString()}
+             </p>
             {isOwner && (
               <div className="flex items-center gap-2 text-xs font-display uppercase tracking-wide">
                 <button onClick={() => setEditing(true)} className="text-muted hover:text-ink">
