@@ -4,10 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  border-radius: 0 !important;
-}
-
 html, body {
   background-color: #EEEBE3;
   color: #17181A;
