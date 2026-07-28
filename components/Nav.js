@@ -1,32 +1,41 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 
-export default function Nav({ session }) {
+export default function Nav({ session, avatarUrl }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
     <header className="border-b-2 border-ink bg-paper sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-5 flex items-center justify-between h-16">
-        <Link href="/" className="font-display font-bold text-lg tracking-tight">
+        <Link href="/" className="font-display font-bold text-lg tracking-tight" onClick={closeMenu}>
           OFF<span className="strike">BOOK</span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link href="/dashboard" className="hover:text-pen">
-            Problems
-          </Link>
-          <Link href="/internships" className="hover:text-pen">
-            Internships
-          </Link>
-          <Link href="/members" className="hover:text-pen">
-            Directory
-          </Link>
+
+        <div className="flex items-center gap-3">
           {session ? (
-            <>
-              <Link href="/profile" className="hover:text-pen">
-                {session.name.split(" ")[0]}
-              </Link>
-              <LogoutButton />
-            </>
+            <Link
+              href="/profile"
+              onClick={closeMenu}
+              aria-label="Your profile"
+              className="shrink-0 block w-9 h-9 border-2 border-ink overflow-hidden"
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-panel flex items-center justify-center font-display font-bold text-xs">
+                  {session.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </Link>
           ) : (
-            <>
+            <div className="flex items-center gap-4 text-sm font-medium">
               <Link href="/login" className="hover:text-pen">
                 Log in
               </Link>
@@ -36,10 +45,64 @@ export default function Nav({ session }) {
               >
                 Join
               </Link>
-            </>
+            </div>
           )}
-        </nav>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            className="shrink-0 flex flex-col items-center justify-center gap-1.5 w-9 h-9 border-2 border-ink"
+          >
+            <span
+              className={`block w-4 h-0.5 bg-ink transition-transform ${
+                menuOpen ? "translate-y-2 rotate-45" : ""
+              }`}
+            />
+            <span className={`block w-4 h-0.5 bg-ink transition-opacity ${menuOpen ? "opacity-0" : ""}`} />
+            <span
+              className={`block w-4 h-0.5 bg-ink transition-transform ${
+                menuOpen ? "-translate-y-2 -rotate-45" : ""
+              }`}
+            />
+          </button>
+        </div>
       </div>
+
+      {menuOpen && (
+        <>
+          <button
+            aria-hidden="true"
+            tabIndex={-1}
+            onClick={closeMenu}
+            className="fixed inset-0 z-30 cursor-default bg-ink/20"
+          />
+          <nav className="relative z-40 border-t-2 border-ink bg-paper">
+            <div className="max-w-5xl mx-auto px-5 py-4 flex flex-col gap-4 text-sm font-medium">
+              <Link href="/dashboard" className="hover:text-pen" onClick={closeMenu}>
+                Problems
+              </Link>
+              <Link href="/internships" className="hover:text-pen" onClick={closeMenu}>
+                Internships
+              </Link>
+              <Link href="/members" className="hover:text-pen" onClick={closeMenu}>
+                Directory
+              </Link>
+              {session && (
+                <>
+                  <div className="border-t border-line -mx-5 px-5 pt-4 flex items-center justify-between">
+                    <Link href="/profile" className="hover:text-pen" onClick={closeMenu}>
+                      {session.name.split(" ")[0]}
+                    </Link>
+                    <LogoutButton />
+                  </div>
+                </>
+              )}
+            </div>
+          </nav>
+        </>
+      )}
     </header>
   );
 }
