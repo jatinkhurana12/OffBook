@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { getSession } from "../lib/auth";
 
 export default function Home() {
+  const session = getSession(); 
   return (
     <div>
       {/* Hero */}
@@ -95,12 +97,21 @@ export default function Home() {
       <section className="max-w-5xl mx-auto px-5 py-16 text-center">
         <h2 className="font-display text-2xl font-bold mb-3">No transcript required.</h2>
         <p className="text-muted mb-8">Just the next problem you're willing to solve.</p>
-        <Link
-          href="/signup"
-          className="inline-block bg-ink text-paper px-8 py-3 font-display text-sm uppercase tracking-wider hover:bg-pen transition-colors"
-        >
-          Create your profile
-        </Link>
+        {session ? (
+          <Link
+            href="/dashboard"
+            className="inline-block bg-ink text-paper px-8 py-3 font-display text-sm uppercase tracking-wider hover:bg-pen transition-colors"
+          >
+            Explore the problems
+          </Link>
+        ) : (
+          <Link
+            href="/signup"
+            className="inline-block bg-ink text-paper px-8 py-3 font-display text-sm uppercase tracking-wider hover:bg-pen transition-colors"
+          >
+            Create your profile
+          </Link>
+        )}
       </section>
     </div>
   );
