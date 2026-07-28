@@ -7,7 +7,12 @@ export default function LoginPage() {
       <h1 className="font-display text-2xl font-bold mb-2">Welcome back</h1>
       <p className="text-muted text-sm mb-8">Pick up where you left off.</p>
       <AuthForm mode="login" />
-      <p className="text-sm text-muted mt-6">
+      <p className="text-sm text-muted mt-4">
+        <Link href="/forgot-password" className="text-pen font-medium">
+          Forgot your password?
+        </Link>
+      </p>
+      <p className="text-sm text-muted mt-2">
         New here?{" "}
         <Link href="/signup" className="text-pen font-medium">
           Create a profile
