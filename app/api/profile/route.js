@@ -21,7 +21,7 @@ export async function PUT(request) {
   if (!session) return NextResponse.json({ error: "You need to log in first." }, { status: 401 });
 
   const {
-    name
+    name,
     headline,
     bio,
     left_because,
@@ -67,6 +67,8 @@ await query("UPDATE users SET name = $1 WHERE id = $2", [cleanName, session.id])
     ]
   );
 
+createSessionCookie({ id: session.id, name: cleanName, email: session.email });
+
   return NextResponse.json({ ok: true });
 }
 
@@ -79,6 +81,6 @@ export async function DELETE() {
   await query("DELETE FROM users WHERE id = $1", [session.id]);
 
   clearSessionCookie();
-  createSessionCookie({ id: session.id, name: cleanName, email: session.email });
+
   return NextResponse.json({ ok: true });
 }
