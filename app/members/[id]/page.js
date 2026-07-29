@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Avatar from "../../../components/Avatar";
 import FollowButton from "../../../components/FollowButton";
-import MessageModal from "../../../components/MessageModal";
 
 const AVAILABILITY_LABEL = {
   exploring: "Just exploring",
@@ -80,12 +79,14 @@ export default function MemberProfile() {
           {!isSelf && (
             <div className="flex gap-3">
               <FollowButton userId={member.id} initialFollowing={following} onChange={setFollowing} />
-              <button
+              <button>
                 type="button"
-                onClick={() => setMessaging(true)}
-                className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-panel hover:text-pen hover:border-pen"
-              >
-                Message
+              <Link
+  href={`/messages/${f.id}`}   // use member.id on the profile page
+  className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-ink text-paper hover:bg-pen"
+>
+  Message
+</Link>
               </button>
             </div>
           )}

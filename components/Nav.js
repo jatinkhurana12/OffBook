@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
+import { useEffect, useState } from "react";
 
 export default function Nav({ session, avatarUrl }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,6 +11,24 @@ export default function Nav({ session, avatarUrl }) {
   function closeMenu() {
     setMenuOpen(false);
   }
+
+const UNREAD_POLL_MS = 15000;
+
+// inside the component, alongside the existing menuOpen state:
+const [unreadCount, setUnreadCount] = useState(0);
+
+useEffect(() => {
+  if (!session) return;
+  function loadUnread() {
+    fetch("/api/messages/unread-count")
+      .then((r) => r.json())
+      .then((data) => setUnreadCount(data.count || 0))
+      .catch(() => {});
+  }
+  loadUnread();
+  const interval = setInterval(loadUnread, UNREAD_POLL_MS);
+  return () => clearInterval(interval);
+}, [session]);
 
   return (
     <header className="border-b-2 border-ink bg-paper sticky top-0 z-40">
@@ -94,6 +113,18 @@ export default function Nav({ session, avatarUrl }) {
                   <Link href="/my-folks" className="hover:text-pen" onClick={closeMenu}>
                     My Folks
                   </Link>
+              <Link
+                href="/messages"
+                className="hover:text-pen flex items-center gap-2"
+                onClick={closeMenu}
+              >
+                Messages
+                {unreadCount > 0 && (
+                <span className="bg-pen text-paper text-[11px] font-display font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+  )}
+</Link>
                   <div className="border-t border-line -mx-5 px-5 pt-4 flex items-center justify-between">
                     <Link href="/profile" className="hover:text-pen" onClick={closeMenu}>
                       {session.name.split(" ")[0]}

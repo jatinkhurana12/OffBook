@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Avatar from "../../components/Avatar";
-import MessageModal from "../../components/MessageModal";
 
 const AVAILABILITY_LABEL = {
   exploring: "Just exploring",
@@ -81,11 +80,15 @@ export default function MyFolks() {
                 >
                   View profile
                 </Link>
-                <button
+                <button>
                   type="button"
-                  onClick={() => setMessaging({ id: f.id, name: f.name })}
-                  className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-ink text-paper hover:bg-pen"
+                 <Link
+                href={`/messages/${f.id}`}   // use member.id on the profile page
+                className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-ink text-paper hover:bg-pen"
                 >
+                Message
+                </Link>
+                
                   Message
                 </button>
                 <button
@@ -100,14 +103,6 @@ export default function MyFolks() {
             </li>
           ))}
         </ul>
-      )}
-
-      {messaging && (
-        <MessageModal
-          userId={messaging.id}
-          userName={messaging.name}
-          onClose={() => setMessaging(null)}
-        />
       )}
     </div>
   );
