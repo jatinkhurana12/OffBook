@@ -80,17 +80,12 @@ export default function MyFolks() {
                 >
                   View profile
                 </Link>
-                <button>
-                  type="button"
-                 <Link
-                href={`/messages/${f.id}`}   // use member.id on the profile page
-                className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-ink text-paper hover:bg-pen"
-                >
-                Message
-                </Link>
-                
-                  Message
-                </button>
+<Link
+  href={`/messages/${f.id}`}
+  className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-ink text-paper hover:bg-pen"
+>
+  Message
+</Link>
                 <button
                   type="button"
                   onClick={() => handleUnfollow(f.id)}
