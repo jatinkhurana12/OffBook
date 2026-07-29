@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Avatar from "../../components/Avatar";
+import FollowButton from "../../components/FollowButton";
 
 const AVAILABILITY_LABEL = {
   exploring: "Just exploring",
@@ -13,6 +15,13 @@ export default function Members() {
   const [members, setMembers] = useState([]);
   const [skill, setSkill] = useState("");
   const [loading, setLoading] = useState(true);
+  const [myUserId, setMyUserId] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((data) => setMyUserId(data.session ? data.session.id : null));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -47,17 +56,22 @@ export default function Members() {
         <ul className="space-y-4">
           {members.map((m) => (
             <li key={m.id} className="border-2 border-ink bg-panel p-5">
- <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
+ <div className="flex items-start justify-between gap-4 flex-wrap">
+                <Link href={`/members/${m.id}`} className="flex items-start gap-3 group">
                   <Avatar src={m.avatar_url} name={m.name} size="md" />
                   <div>
-                    <h2 className="font-display font-semibold text-lg">{m.name}</h2>
+                    <h2 className="font-display font-semibold text-lg group-hover:text-pen">{m.name}</h2>
                     {m.headline && <p className="text-sm text-muted mt-0.5">{m.headline}</p>}
                   </div>
+                </Link>
+                <div className="flex items-center gap-3">
+                  <span className="font-display text-[11px] uppercase tracking-wide text-pen whitespace-nowrap">
+                    {AVAILABILITY_LABEL[m.availability] || m.availability}
+                  </span>
+                  {myUserId !== m.id && (
+                    <FollowButton userId={m.id} initialFollowing={m.is_following} />
+                  )}
                 </div>
-                 <span className="font-display text-[11px] uppercase tracking-wide text-pen whitespace-nowrap">
-                  {AVAILABILITY_LABEL[m.availability] || m.availability}
-                </span>
               </div>
               {m.left_because && (
                 <p className="text-sm mt-3 border-l-2 border-line pl-3 text-muted italic">

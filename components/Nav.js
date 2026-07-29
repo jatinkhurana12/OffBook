@@ -91,6 +91,9 @@ export default function Nav({ session, avatarUrl }) {
               </Link>
               {session && (
                 <>
+                  <Link href="/my-folks" className="hover:text-pen" onClick={closeMenu}>
+                    My Folks
+                  </Link>
                   <div className="border-t border-line -mx-5 px-5 pt-4 flex items-center justify-between">
                     <Link href="/profile" className="hover:text-pen" onClick={closeMenu}>
                       {session.name.split(" ")[0]}
