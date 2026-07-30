@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
+import PushNotifications from "./PushNotifications";
 import { useEffect, useState } from "react";
 
 const NAV_LINKS = [
@@ -58,6 +59,7 @@ useEffect(() => {
         </Link>
 
         <div className="flex items-center gap-3">
+          {session && <PushNotifications />}
           {session ? (
             <Link
               href="/profile"

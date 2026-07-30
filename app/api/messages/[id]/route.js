@@ -1,6 +1,6 @@
 const { query } = require("../../../../lib/db");
 const { getSession } = require("../../../../lib/auth");
-const { sendMessageNotificationEmail } = require("../../../../lib/mailer");
+const { sendPushToUser } = require("../../../../lib/push");
 import { NextResponse } from "next/server";
 
 // GET the full message history between the logged-in user and :id, and mark
@@ -76,13 +76,14 @@ export async function POST(request, { params }) {
     [session.id, recipientId, cleanMessage]
   );
 
-  if (priorUnread.rows.length === 0) {
-    // Best-effort — a failed notification email shouldn't fail the send.
-    sendMessageNotificationEmail({
-      toEmail: recipient.rows[0].email,
-      toName: recipient.rows[0].name,
-      fromName: session.name,
-    }).catch((err) => console.error("[messages] notification email failed:", err));
+ if (priorUnread.rows.length === 0) {
+    // Best-effort — a failed push notification shouldn't fail the send.
+    // No email involved: this goes straight to the browser via Web Push.
+    sendPushToUser(recipientId, {
+      title: `${session.name} sent you a message`,
+      body: cleanMessage.length > 120 ? `${cleanMessage.slice(0, 117)}...` : cleanMessage,
+      url: "/messages",
+    }).catch((err) => console.error("[messages] push notification failed:", err));
   }
 
   return NextResponse.json({ message: inserted.rows[0] });
