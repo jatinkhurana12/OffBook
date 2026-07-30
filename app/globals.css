@@ -1,25 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html, body {
-  background-color: #EEEBE3;
-  color: #17181A;
+  background-color: #080B14;
+  color: #EAF2FF;
 }
 
 body {
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  position: relative;
 }
 
 .font-display {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 ::selection {
-  background: #C23B22;
-  color: #EEEBE3;
+  background: #FF3D81;
+  color: #080B14;
 }
 
 a {
@@ -27,8 +28,24 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid #1F3FBF;
+  outline: 2px solid #4F8FFF;
   outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #080B14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2A44;
+  border-radius: 999px;
+  border: 2px solid #080B14;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2b3a5e;
 }
 
 .strike {
@@ -41,16 +58,73 @@ a {
   left: -2%;
   right: -2%;
   top: 48%;
-  height: 3px;
-  background: #C23B22;
+  height: 2px;
+  background: #FF3D81;
+  box-shadow: 0 0 8px #FF3D81;
   transform: rotate(-1.5deg);
 }
 
+/* Cinematic ambient background: layered nebula + grid, fixed behind all content */
 .paper-texture {
-  background-image: radial-gradient(#00000008 1px, transparent 1px);
-  background-size: 4px 4px;
+  position: relative;
+  isolation: isolate;
+}
+
+.paper-texture::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60% 45% at 12% 8%, rgba(79,143,255,0.20) 0%, transparent 60%),
+    radial-gradient(50% 40% at 90% 15%, rgba(255,61,129,0.16) 0%, transparent 60%),
+    radial-gradient(55% 45% at 50% 95%, rgba(45,224,193,0.12) 0%, transparent 60%),
+    #080B14;
+  animation: drift 18s ease-in-out infinite;
+}
+
+.paper-texture::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(234,242,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(234,242,255,0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 90%);
+}
+
+/* Glass surface used across cards/panels */
+.glass {
+  background: rgba(15, 21, 36, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 242, 255, 0.08);
+}
+
+/* Gradient text for hero headlines */
+.text-glow-gradient {
+  background: linear-gradient(90deg, #EAF2FF 0%, #4F8FFF 45%, #FF3D81 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Reusable glow-on-hover for cards */
+.hover-glow {
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.hover-glow:hover {
+  transform: translateY(-4px);
+  border-color: rgba(79,143,255,0.5);
+  box-shadow: 0 0 0 1px rgba(79,143,255,0.25), 0 20px 60px -20px rgba(79,143,255,0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+  .paper-texture::before { animation: none; }
 }

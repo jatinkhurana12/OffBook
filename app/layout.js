@@ -23,7 +23,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en">
-      <body className="min-h-screen paper-texture flex flex-col">
+        <body className="min-h-screen paper-texture flex flex-col overflow-x-hidden">
         <Nav session={session} avatarUrl={avatarUrl} />
         <main className="flex-1">{children}</main>
         <Footer />
