@@ -35,6 +35,7 @@ module.exports = {
           "0%, 100%": { transform: "translateY(0px) rotate(1deg)" },
           "50%": { transform: "translateY(-10px) rotate(0.5deg)" },
         },
+      
         drift: {
           "0%, 100%": { transform: "translate(0, 0) scale(1)" },
           "50%": { transform: "translate(20px, -30px) scale(1.05)" },
@@ -47,12 +48,17 @@ module.exports = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "page-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         float: "float 6s ease-in-out infinite",
         drift: "drift 14s ease-in-out infinite",
         "fade-up": "fade-up 0.7s cubic-bezier(0.16,1,0.3,1) both",
         shimmer: "shimmer 3s linear infinite",
+        "page-in": "page-in 0.45s cubic-bezier(0.16,1,0.3,1) both",
       },
     },
   },

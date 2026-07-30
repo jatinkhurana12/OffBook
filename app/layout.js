@@ -1,6 +1,7 @@
 import "./globals.css";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import PageTransition from "../components/PageTransition";
 import { getSession } from "../lib/auth";
 import { query } from "../lib/db";
 
@@ -25,7 +26,9 @@ export default async function RootLayout({ children }) {
     <html lang="en">
         <body className="min-h-screen paper-texture flex flex-col overflow-x-hidden">
         <Nav session={session} avatarUrl={avatarUrl} />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <Footer />
       </body>
     </html>
