@@ -138,7 +138,7 @@ export default function PushNotifications() {
           : "border-line text-muted hover:border-cobalt hover:text-cobalt"
       }`}
     >
-      <BellIcon />
+      <BellIcon slashed={status !== "on"} />
     </button>
   );
 }
