@@ -10,7 +10,7 @@ export async function GET() {
     `WITH threads AS (
        SELECT
          CASE WHEN sender_id = $1 THEN recipient_id ELSE sender_id END AS other_id,
-         body, created_at, sender_id
+         body, created_at, sender_id, attachment_type
        FROM messages
        WHERE (sender_id = $1 OR recipient_id = $1)
          AND NOT (
@@ -19,7 +19,7 @@ export async function GET() {
      ),
      latest AS (
        SELECT DISTINCT ON (other_id) other_id, body AS last_body, created_at AS last_at,
-              sender_id AS last_sender_id
+              sender_id AS last_sender_id, attachment_type AS last_attachment_type
        FROM threads
        ORDER BY other_id, created_at DESC
      ),
@@ -30,7 +30,7 @@ export async function GET() {
        GROUP BY sender_id
      )
      SELECT users.id, users.name, profiles.avatar_url,
-            latest.last_body, latest.last_at, latest.last_sender_id,
+            latest.last_body, latest.last_at, latest.last_sender_id, latest.last_attachment_type,
             COALESCE(unread.unread_count, 0) AS unread_count
      FROM latest
      JOIN users ON users.id = latest.other_id

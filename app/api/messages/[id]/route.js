@@ -28,7 +28,8 @@ export async function GET(request, { params }) {
   );
 
   const messages = await query(
-    `SELECT id, sender_id, recipient_id, body, created_at
+    `SELECT id, sender_id, recipient_id, body, created_at,
+            attachment_url, attachment_type, attachment_name
      FROM messages
      WHERE ((sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1))
        AND NOT (
@@ -74,13 +75,33 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "You can't message that person." }, { status: 400 });
   }
 
-  const { message } = await request.json();
+  const { message, attachment } = await request.json();
   const cleanMessage = (message || "").trim();
-  if (!cleanMessage) {
-    return NextResponse.json({ error: "Write something before sending." }, { status: 400 });
+
+  // A message needs either text or an attachment (or both) — but not neither.
+  if (!cleanMessage && !attachment) {
+    return NextResponse.json({ error: "Write something or attach a file before sending." }, { status: 400 });
   }
   if (cleanMessage.length > 4000) {
     return NextResponse.json({ error: "That message is too long." }, { status: 400 });
+  }
+
+  let attachmentUrl = null;
+  let attachmentType = null;
+  let attachmentName = null;
+  if (attachment) {
+    const { url, type, name } = attachment;
+    if (!url || !["image", "audio", "video"].includes(type)) {
+      return NextResponse.json({ error: "That attachment looks invalid." }, { status: 400 });
+    }
+    // Only ever accept blob URLs from our own storage account, never an
+    // arbitrary URL the client could pass in.
+    if (!url.includes(".public.blob.vercel-storage.com/")) {
+      return NextResponse.json({ error: "That attachment looks invalid." }, { status: 400 });
+    }
+    attachmentUrl = url;
+    attachmentType = type;
+    attachmentName = (name || "").slice(0, 200);
   }
 
   const recipient = await query("SELECT id, name, email FROM users WHERE id = $1", [recipientId]);
@@ -97,17 +118,24 @@ export async function POST(request, { params }) {
   );
 
   const inserted = await query(
-    `INSERT INTO messages (sender_id, recipient_id, body) VALUES ($1, $2, $3)
-     RETURNING id, sender_id, recipient_id, body, created_at`,
-    [session.id, recipientId, cleanMessage]
+    `INSERT INTO messages (sender_id, recipient_id, body, attachment_url, attachment_type, attachment_name)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, sender_id, recipient_id, body, created_at,
+               attachment_url, attachment_type, attachment_name`,
+    [session.id, recipientId, cleanMessage, attachmentUrl, attachmentType, attachmentName]
   );
 
  if (priorUnread.rows.length === 0) {
     // Best-effort — a failed push notification shouldn't fail the send.
     // No email involved: this goes straight to the browser via Web Push.
+    const pushBody = cleanMessage
+      ? (cleanMessage.length > 120 ? `${cleanMessage.slice(0, 117)}...` : cleanMessage)
+      : attachmentType
+      ? `Sent a${attachmentType === "image" ? "n" : ""} ${attachmentType}`
+      : "";
     sendPushToUser(recipientId, {
       title: `${session.name} sent you a message`,
-      body: cleanMessage.length > 120 ? `${cleanMessage.slice(0, 117)}...` : cleanMessage,
+      body: pushBody,
       url: "/messages",
     }).catch((err) => console.error("[messages] push notification failed:", err));
   }

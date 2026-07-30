@@ -1,4 +1,5 @@
 const { query } = require("../../../../lib/db");
+const { deleteAttachment } = require("../../../../lib/blob");
 import { NextResponse } from "next/server";
 
 // Deletes every message (sent or received, read or not) older than 72 hours.
@@ -21,10 +22,19 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
+  // Grab attachment URLs first so we can clean up the blob store too —
+  // otherwise old media just sits there forever after its message is gone.
+  const expiring = await query(
+    "SELECT id, attachment_url FROM messages WHERE created_at < NOW() - INTERVAL '72 hours' AND attachment_url IS NOT NULL"
+  );
+  await Promise.all(expiring.rows.map((row) => deleteAttachment(row.attachment_url)));
+
   const result = await query(
     "DELETE FROM messages WHERE created_at < NOW() - INTERVAL '72 hours' RETURNING id"
   );
 
-  console.log(`[cleanup-messages] Deleted ${result.rowCount} message(s) older than 72 hours.`);
-  return NextResponse.json({ deleted: result.rowCount });
+  console.log(
+    `[cleanup-messages] Deleted ${result.rowCount} message(s) older than 72 hours (${expiring.rows.length} with attachments).`
+  );
+  return NextResponse.json({ deleted: result.rowCount, attachmentsDeleted: expiring.rows.length });
 }

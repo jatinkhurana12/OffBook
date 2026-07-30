@@ -20,7 +20,10 @@ export default function Conversation() {
   const [notFound, setNotFound] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [clearingChat, setClearingChat] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/session")
@@ -56,16 +59,35 @@ export default function Conversation() {
       });
   }
 
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let picking the same file twice re-trigger onChange
+    if (!file) return;
+
+    setError("");
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/messages/upload", { method: "POST", body: formData });
+    const data = await res.json().catch(() => ({}));
+    setUploading(false);
+    if (!res.ok) {
+      setError(data.error || "Couldn't upload that file. Try again.");
+      return;
+    }
+    setPendingAttachment(data.attachment);
+  }
+
   async function handleSend(e) {
     e.preventDefault();
     const text = body.trim();
-    if (!text) return;
+    if (!text && !pendingAttachment) return;
     setSending(true);
     setError("");
     const res = await fetch(`/api/messages/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, attachment: pendingAttachment || undefined }),
     });
     const data = await res.json().catch(() => ({}));
     setSending(false);
@@ -75,6 +97,7 @@ export default function Conversation() {
     }
     setMessages((current) => [...current, data.message]);
     setBody("");
+    setPendingAttachment(null);
   }
 
   async function handleDeleteMessage(messageId) {
@@ -180,6 +203,29 @@ export default function Conversation() {
                     mine ? "bg-ink text-paper" : "bg-panel"
                   }`}
                 >
+                  {m.attachment_url && (
+                    <div className={m.body ? "mb-2" : ""}>
+                      {m.attachment_type === "image" && (
+                        <a href={m.attachment_url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={m.attachment_url}
+                            alt={m.attachment_name || "Shared image"}
+                            className="max-w-full max-h-72 border-2 border-ink"
+                          />
+                        </a>
+                      )}
+                      {m.attachment_type === "video" && (
+                        <video
+                          src={m.attachment_url}
+                          controls
+                          className="max-w-full max-h-72 border-2 border-ink"
+                        />
+                      )}
+                      {m.attachment_type === "audio" && (
+                        <audio src={m.attachment_url} controls className="max-w-full" />
+                      )}
+                    </div>
+                  )}
                   {m.body}
                 </div>
                 {!mine && (
@@ -201,7 +247,43 @@ export default function Conversation() {
         <div ref={bottomRef} />
       </div>
 
+      {pendingAttachment && (
+        <div className="flex items-center gap-2 border-2 border-ink bg-panel px-3 py-2 mb-3 text-xs">
+          {pendingAttachment.type === "image" ? (
+            <img src={pendingAttachment.url} alt="" className="h-10 w-10 object-cover border border-ink" />
+          ) : (
+            <span className="font-display uppercase tracking-wider">{pendingAttachment.type}</span>
+          )}
+          <span className="truncate flex-1">{pendingAttachment.name}</span>
+          <button
+            type="button"
+            onClick={() => setPendingAttachment(null)}
+            className="text-muted hover:text-pen"
+            aria-label="Remove attachment"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSend} className="border-t-2 border-ink pt-4 flex gap-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,audio/*,video/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading || !!pendingAttachment}
+          title="Attach an image, audio, or video file"
+          aria-label="Attach a file"
+          className="font-display text-xs uppercase tracking-wider px-3 py-2.5 border-2 border-ink hover:border-pen hover:text-pen disabled:opacity-40"
+        >
+          {uploading ? "..." : "📎"}
+        </button>
         <input
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -210,7 +292,7 @@ export default function Conversation() {
         />
         <button
           type="submit"
-          disabled={sending || !body.trim()}
+          disabled={sending || uploading || (!body.trim() && !pendingAttachment)}
           className="font-display text-xs uppercase tracking-wider px-5 py-2.5 border-2 border-ink bg-ink text-paper hover:bg-pen disabled:opacity-50"
         >
           {sending ? "..." : "Send"}

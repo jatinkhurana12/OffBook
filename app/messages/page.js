@@ -64,7 +64,10 @@ export default function Messages() {
                     }`}
                   >
                     {c.last_sender_id !== c.id ? "You: " : ""}
-                    {c.last_body}
+                    {c.last_body ||
+                      (c.last_attachment_type
+                        ? `📎 Sent a${c.last_attachment_type === "image" ? "n" : ""} ${c.last_attachment_type}`
+                        : "")}
                   </p>
                 </div>
                 {c.unread_count > 0 && (
