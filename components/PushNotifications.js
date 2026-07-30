@@ -16,6 +16,7 @@ function urlBase64ToUint8Array(base64String) {
 // no email involved.
 export default function PushNotifications() {
   const [status, setStatus] = useState("checking"); // checking | unsupported | off | on | denied
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -84,13 +85,44 @@ export default function PushNotifications() {
 
   if (status === "denied") {
     return (
-      <span
-        className="hidden sm:inline-flex items-center justify-center w-9 h-9 text-muted"
-        title="Notifications are blocked in your browser settings"
-        aria-label="Notifications blocked"
-      >
-        <BellIcon slashed />
-      </span>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowHint((open) => !open)}
+          aria-label="Notifications blocked — click for how to fix this"
+          title="Notifications are blocked in your browser settings"
+          className="shrink-0 relative flex items-center justify-center w-9 h-9 border border-line text-muted hover:border-pen hover:text-pen transition-all duration-300"
+        >
+          <BellIcon slashed />
+          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-pen text-paper shadow-glow-pen">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M18 6L6 18M6 6l12 12"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+        </button>
+
+        {showHint && (
+          <div className="absolute right-0 top-11 z-50 w-56 glass shadow-panel p-3 text-xs text-muted animate-fade-up">
+            <p className="text-ink font-medium mb-1">Notifications are blocked</p>
+            <p>
+              You declined the browser prompt (or blocked it earlier). Enable notifications for
+              this site in your browser&apos;s address-bar site settings, then refresh the page.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowHint(false)}
+              className="mt-2 nav-link text-cobalt"
+            >
+              Got it
+            </button>
+          </div>
+        )}
+      </div>
     );
   }
 
