@@ -12,7 +12,10 @@ export async function GET() {
          CASE WHEN sender_id = $1 THEN recipient_id ELSE sender_id END AS other_id,
          body, created_at, sender_id
        FROM messages
-       WHERE sender_id = $1 OR recipient_id = $1
+       WHERE (sender_id = $1 OR recipient_id = $1)
+         AND NOT (
+           (sender_id = $1 AND deleted_by_sender) OR (recipient_id = $1 AND deleted_by_recipient)
+         )
      ),
      latest AS (
        SELECT DISTINCT ON (other_id) other_id, body AS last_body, created_at AS last_at,
@@ -23,7 +26,7 @@ export async function GET() {
      unread AS (
        SELECT sender_id AS other_id, COUNT(*) AS unread_count
        FROM messages
-       WHERE recipient_id = $1 AND read_at IS NULL
+       WHERE recipient_id = $1 AND read_at IS NULL AND NOT deleted_by_recipient
        GROUP BY sender_id
      )
      SELECT users.id, users.name, profiles.avatar_url,

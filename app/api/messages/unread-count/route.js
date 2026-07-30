@@ -7,7 +7,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ count: 0 });
 
   const result = await query(
-    "SELECT COUNT(*)::int AS count FROM messages WHERE recipient_id = $1 AND read_at IS NULL",
+    "SELECT COUNT(*)::int AS count FROM messages WHERE recipient_id = $1 AND read_at IS NULL AND NOT deleted_by_recipient",
     [session.id]
   );
 

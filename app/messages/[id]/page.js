@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Avatar from "../../../components/Avatar";
+import MessageRetentionNotice from "../../../components/MessageRetentionNotice";
 
 const POLL_MS = 4000;
 
@@ -17,6 +18,8 @@ export default function Conversation() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [clearingChat, setClearingChat] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -74,6 +77,40 @@ export default function Conversation() {
     setBody("");
   }
 
+  async function handleDeleteMessage(messageId) {
+    if (!window.confirm("Delete this message for you? The other person will still see theirs.")) {
+      return;
+    }
+    setDeletingId(messageId);
+    const res = await fetch(`/api/messages/message/${messageId}`, { method: "DELETE" });
+    setDeletingId(null);
+    if (res.ok) {
+      setMessages((current) => current.filter((m) => m.id !== messageId));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Couldn't delete that message. Try again.");
+    }
+  }
+
+  async function handleClearChat() {
+    if (
+      !window.confirm(
+        "Delete this entire conversation for you? The other person will still see their copy."
+      )
+    ) {
+      return;
+    }
+    setClearingChat(true);
+    const res = await fetch(`/api/messages/${id}`, { method: "DELETE" });
+    setClearingChat(false);
+    if (res.ok) {
+      setMessages([]);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Couldn't clear this chat. Try again.");
+    }
+  }
+
   if (notFound) {
     return (
       <div className="max-w-2xl mx-auto px-5 py-12">
@@ -100,6 +137,18 @@ export default function Conversation() {
             <span className="font-display font-semibold group-hover:text-pen">{otherUser.name}</span>
           </Link>
         )}
+        <div className="ml-auto flex items-center gap-2">
+          <MessageRetentionNotice />
+          <button
+            type="button"
+            onClick={handleClearChat}
+            disabled={clearingChat || messages.length === 0}
+            title="Delete this chat for you"
+            className="font-display text-xs uppercase tracking-wider px-3 py-1.5 border-2 border-ink hover:border-pen hover:text-pen disabled:opacity-40"
+          >
+            {clearingChat ? "..." : "Delete chat"}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto py-6 space-y-3">
@@ -113,7 +162,19 @@ export default function Conversation() {
           messages.map((m) => {
             const mine = m.sender_id === myUserId;
             return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex items-center gap-2 group ${mine ? "justify-end" : "justify-start"}`}>
+                {mine && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMessage(m.id)}
+                    disabled={deletingId === m.id}
+                    title="Delete for you"
+                    aria-label="Delete message"
+                    className="opacity-0 group-hover:opacity-100 text-muted hover:text-pen text-xs transition-opacity disabled:opacity-100"
+                  >
+                    ✕
+                  </button>
+                )}
                 <div
                   className={`max-w-[75%] px-4 py-2.5 border-2 border-ink text-sm whitespace-pre-line ${
                     mine ? "bg-ink text-paper" : "bg-panel"
@@ -121,6 +182,18 @@ export default function Conversation() {
                 >
                   {m.body}
                 </div>
+                {!mine && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMessage(m.id)}
+                    disabled={deletingId === m.id}
+                    title="Delete for you"
+                    aria-label="Delete message"
+                    className="opacity-0 group-hover:opacity-100 text-muted hover:text-pen text-xs transition-opacity disabled:opacity-100"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             );
           })

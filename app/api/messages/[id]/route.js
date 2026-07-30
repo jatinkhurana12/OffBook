@@ -30,12 +30,38 @@ export async function GET(request, { params }) {
   const messages = await query(
     `SELECT id, sender_id, recipient_id, body, created_at
      FROM messages
-     WHERE (sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1)
+     WHERE ((sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1))
+       AND NOT (
+         (sender_id = $1 AND deleted_by_sender) OR (recipient_id = $1 AND deleted_by_recipient)
+       )
      ORDER BY created_at ASC`,
     [session.id, otherId]
   );
 
   return NextResponse.json({ otherUser: otherUser.rows[0], messages: messages.rows });
+}
+
+// DELETE the whole conversation with :id — but only from the logged-in
+// user's side. Messages are marked deleted for whichever role (sender or
+// recipient) the logged-in user played in each row; the other person still
+// sees their copy until they delete it themselves or the 72-hour cleanup
+// job removes it for everyone.
+export async function DELETE(request, { params }) {
+  const session = getSession();
+  if (!session) return NextResponse.json({ error: "You need to log in first." }, { status: 401 });
+
+  const otherId = Number(params.id);
+  if (!otherId) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
+  await query(
+    `UPDATE messages
+     SET deleted_by_sender = CASE WHEN sender_id = $1 THEN TRUE ELSE deleted_by_sender END,
+         deleted_by_recipient = CASE WHEN recipient_id = $1 THEN TRUE ELSE deleted_by_recipient END
+     WHERE (sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1)`,
+    [session.id, otherId]
+  );
+
+  return NextResponse.json({ ok: true });
 }
 
 // POST a new message to :id.
