@@ -49,8 +49,20 @@ module.exports = {
           "100%": { backgroundPosition: "200% 0" },
         },
         "page-in": {
-          "0%": { opacity: "0", transform: "translateY(10px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
+          "0%": { opacity: "0", transform: "translateY(14px) scale(0.99)", filter: "blur(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)", filter: "blur(0px)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.55", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.08)" },
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
         },
       },
       animation: {
@@ -58,7 +70,10 @@ module.exports = {
         drift: "drift 14s ease-in-out infinite",
         "fade-up": "fade-up 0.7s cubic-bezier(0.16,1,0.3,1) both",
         shimmer: "shimmer 3s linear infinite",
-        "page-in": "page-in 0.45s cubic-bezier(0.16,1,0.3,1) both",
+        "page-in": "page-in 0.55s cubic-bezier(0.16,1,0.3,1) both",
+        "glow-pulse": "glow-pulse 4s ease-in-out infinite",
+        "spin-slow": "spin-slow 22s linear infinite",
+        "gradient-x": "gradient-x 6s ease infinite",
       },
     },
   },

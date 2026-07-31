@@ -4,6 +4,8 @@ import Footer from "../components/Footer";
 import PageTransition from "../components/PageTransition";
 import { getSession } from "../lib/auth";
 import { query } from "../lib/db";
+import ScrollProgress from "../components/ScrollProgress";
+import CursorGlow from "../components/CursorGlow";
 
 export const metadata = {
   title: "Offbook — built by people the system wrote off",
@@ -23,8 +25,10 @@ export default async function RootLayout({ children }) {
   }
 
   return (
-    <html lang="en">
+<html lang="en" className="scroll-smooth">
         <body className="min-h-screen paper-texture flex flex-col overflow-x-hidden">
+        <ScrollProgress />
+        <CursorGlow />
         <Nav session={session} avatarUrl={avatarUrl} />
         <main className="flex-1">
           <PageTransition>{children}</PageTransition>

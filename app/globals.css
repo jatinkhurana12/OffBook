@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   background-color: #080B14;
   color: #EAF2FF;
@@ -144,7 +148,49 @@ a {
   box-shadow: 0 0 0 1px rgba(79,143,255,0.25), 0 20px 60px -20px rgba(79,143,255,0.35);
 }
 
+/* Soft floating gradient orb — drop into a `relative overflow-hidden`
+   container and position with top/left/right/bottom utilities. */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Diagonal light-sweep on hover — layer alongside .hover-glow on cards
+   for an extra "scanned by light" futuristic touch. */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+.card-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(234, 242, 255, 0.14), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+.card-shine:hover::before {
+  left: 150%;
+}
+
+/* Animated gradient border ring, e.g. for a featured card or CTA */
+.gradient-ring {
+  background: linear-gradient(90deg, #4f8fff, #ff3d81, #2de0c1, #4f8fff);
+  background-size: 300% auto;
+  animation: gradient-x 6s ease infinite;
+  padding: 1px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
   .paper-texture::before { animation: none; }
 }
