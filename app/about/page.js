@@ -22,7 +22,7 @@ export default function About() {
         </h1>
         <p className="text-lg text-muted max-w-2xl">
           OffBook is a community for people who&apos;d rather build a portfolio than
-          collect a diploma — a place to turn the problems you&apos;ve actually lived
+          collect a degree — a place to turn the problems you&apos;ve actually lived
           through into businesses, teams, and careers.
         </p>
       </section>
