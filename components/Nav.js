@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: "/dashboard", label: "Problems" },
   { href: "/internships", label: "Internships" },
   { href: "/members", label: "Directory" },
+  { href: "/about", label: "About OffBook" },
 ];
 
 export default function Nav({ session, avatarUrl }) {
