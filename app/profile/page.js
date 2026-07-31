@@ -145,6 +145,30 @@ export default function Profile() {
           />
         </Field>
 
+        <Field label="Trailblazer">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={!!form.is_trailblazer}
+              onChange={(e) => setForm({ ...form, is_trailblazer: e.target.checked })}
+              className="w-4 h-4 accent-ink"
+            />
+            I teach a skill or concept through video lectures or articles — list me as a Trailblazer
+          </label>
+        </Field>
+
+        {form.is_trailblazer && (
+          <Field label="Niche">
+            <input
+              value={form.niche || ""}
+              onChange={(e) => setForm({ ...form, niche: e.target.value })}
+              placeholder="e.g. React performance, UI design, public speaking"
+              maxLength={120}
+              className="w-full border-2 border-ink bg-panel px-4 py-2.5 focus:outline-none focus:border-pen"
+            />
+          </Field>
+        )}
+
         <Field label="Why you left">
           <input
             value={form.left_because || ""}

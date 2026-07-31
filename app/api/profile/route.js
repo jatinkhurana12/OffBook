@@ -31,6 +31,8 @@ export async function PUT(request) {
     links,
     shipped,
     avatar_url,
+    is_trailblazer,
+    niche,
   } = await request.json();
 
   // avatar_url is a data: URL (base64) capped client-side at 2MB; guard
@@ -49,10 +51,13 @@ if (cleanName.length > 80) {
 
 await query("UPDATE users SET name = $1 WHERE id = $2", [cleanName, session.id]);
 
+  const cleanNiche = (niche || "").trim().slice(0, 120);
+
   await query(
     `UPDATE profiles SET headline = $1, bio = $2, left_because = $3, skills = $4,
-       looking_for = $5, availability = $6, links = $7, shipped = $8, avatar_url = $9
-     WHERE user_id = $10`,
+       looking_for = $5, availability = $6, links = $7, shipped = $8, avatar_url = $9,
+       is_trailblazer = $10, niche = $11
+     WHERE user_id = $12`,
     [
       headline || "",
       bio || "",
@@ -63,6 +68,8 @@ await query("UPDATE users SET name = $1 WHERE id = $2", [cleanName, session.id])
       links || "",
       shipped || "",
       avatar_url || "",
+      !!is_trailblazer,
+      cleanNiche,
       session.id,
     ]
   );
