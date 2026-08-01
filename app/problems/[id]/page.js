@@ -6,6 +6,8 @@ import Link from "next/link";
 import VoteButtons from "../../../components/VoteButtons";
 import Avatar from "../../../components/Avatar";
 
+const POLL_MS = 6000;
+
 export default function ProblemDetail() {
   const { id } = useParams();
   const router = useRouter();
@@ -18,15 +20,30 @@ export default function ProblemDetail() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/problems/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setProblem(data.problem);
-        setComments(data.comments || []);
-      });
+    let cancelled = false;
+
+    function load() {
+      fetch(`/api/problems/${id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          setProblem(data.problem);
+          setComments(data.comments || []);
+        });
+    }
+
+    load();
+    const interval = setInterval(load, POLL_MS);
     fetch("/api/session")
       .then((r) => r.json())
-      .then((data) => setMyUserId(data.session ? data.session.id : null));
+      .then((data) => {
+        if (!cancelled) setMyUserId(data.session ? data.session.id : null);
+      });
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [id]);
 
   async function handleComment(e) {

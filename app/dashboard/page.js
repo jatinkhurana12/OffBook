@@ -17,19 +17,33 @@ const SEVERITY_COLOR = {
   "deal-breaking": "text-pen font-bold",
 };
 
+const POLL_MS = 8000;
+
 export default function Dashboard() {
   const [problems, setProblems] = useState([]);
   const [domain, setDomain] = useState("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/problems?domain=${domain}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setProblems(data.problems || []);
-        setLoading(false);
-      });
+    let cancelled = false;
+
+    function load(showSpinner) {
+      if (showSpinner) setLoading(true);
+      fetch(`/api/problems?domain=${domain}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          setProblems(data.problems || []);
+          setLoading(false);
+        });
+    }
+
+    load(true);
+    const interval = setInterval(() => load(false), POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [domain]);
 
   return (

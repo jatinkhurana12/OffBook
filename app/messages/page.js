@@ -16,17 +16,24 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
+const POLL_MS = 8000;
+
 export default function Messages() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/messages")
-      .then((r) => r.json())
-      .then((data) => {
-        setConversations(data.conversations || []);
-        setLoading(false);
-      });
+    function load() {
+      fetch("/api/messages")
+        .then((r) => r.json())
+        .then((data) => {
+          setConversations(data.conversations || []);
+          setLoading(false);
+        });
+    }
+    load();
+    const interval = setInterval(load, POLL_MS);
+    return () => clearInterval(interval);
   }, []);
 
   return (

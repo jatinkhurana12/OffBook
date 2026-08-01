@@ -1,12 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function VoteButtons({ problemId, initialUpvotes, initialDownvotes, initialMyVote, size = "md" }) {
   const [upvotes, setUpvotes] = useState(initialUpvotes || 0);
   const [downvotes, setDownvotes] = useState(initialDownvotes || 0);
   const [myVote, setMyVote] = useState(initialMyVote || 0);
   const [loading, setLoading] = useState(false);
+  // While a vote is in flight (or was just cast), a background poll can
+  // race the fetch response and briefly overwrite it with stale numbers.
+  // This guards against that without needing a full request-token setup.
+  const skipNextSyncRef = useRef(false);
+
+  useEffect(() => {
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      return;
+    }
+    setUpvotes(initialUpvotes || 0);
+    setDownvotes(initialDownvotes || 0);
+    setMyVote(initialMyVote || 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUpvotes, initialDownvotes, initialMyVote]);
 
   async function castVote(voteType, e) {
     e.preventDefault();
@@ -28,6 +43,10 @@ export default function VoteButtons({ problemId, initialUpvotes, initialDownvote
     if (!res.ok) return;
 
     const data = await res.json();
+    // Ignore the next prop sync — it may be from a background poll that was
+    // already in flight before this vote landed, and would otherwise
+    // briefly flash the pre-vote counts back in.
+    skipNextSyncRef.current = true;
     setUpvotes(data.upvotes);
     setDownvotes(data.downvotes);
     setMyVote(data.myVote);
