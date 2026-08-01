@@ -6,6 +6,17 @@ import Link from "next/link";
 import Avatar from "../../../components/Avatar";
 import YouTubePlayer from "../../../components/YouTubePlayer";
 
+// Explicit DD/MM/YYYY, independent of the browser's locale — avoids
+// toLocaleDateString() rendering "1/8/2026" for one visitor and
+// "8/1/2026" for another on the exact same date.
+function formatLectureDate(dateString) {
+  const d = new Date(dateString);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export default function TrailblazerProfile() {
   const { id } = useParams();
   const [member, setMember] = useState(null);
@@ -66,18 +77,16 @@ export default function TrailblazerProfile() {
         <div className="space-y-8">
           {lectures.map((lecture) => (
             <article key={lecture.id} className="border-2 border-ink bg-panel p-5">
-              <h2 className="font-display text-lg font-bold mb-1">{lecture.title}</h2>
+              <h2 className="font-display text-lg font-bold mb-1 break-words">{lecture.title}</h2>
               {lecture.description && (
-                <p className="text-muted text-sm mb-3">{lecture.description}</p>
+                <p className="text-muted text-sm mb-3 break-words">{lecture.description}</p>
               )}
               {lecture.type === "video" ? (
                 <YouTubePlayer videoId={lecture.youtube_video_id} title={lecture.title} />
               ) : (
-                <p className="text-sm whitespace-pre-line">{lecture.body}</p>
+                <p className="text-sm whitespace-pre-line break-words">{lecture.body}</p>
               )}
-              <p className="text-xs text-muted mt-3">
-                {new Date(lecture.created_at).toLocaleDateString()}
-              </p>
+              <p className="text-xs text-muted mt-3">{formatLectureDate(lecture.created_at)}</p>
             </article>
           ))}
         </div>
