@@ -41,10 +41,20 @@ export default function Trailblazers() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-12">
-      <h1 className="font-display text-2xl font-bold mb-2">Trailblazers</h1>
-      <p className="text-muted text-sm mb-8">
-        People teaching a skill or useful concept through video lectures or articles.
-      </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-8">
+        <div>
+          <h1 className="font-display text-2xl font-bold mb-2">Trailblazers</h1>
+          <p className="text-muted text-sm">
+            People teaching a skill or useful concept through video lectures or articles.
+          </p>
+        </div>
+        <Link
+          href="/trailblazers/studio"
+          className="font-display text-xs uppercase tracking-wider px-4 py-2 border-2 border-ink bg-ink text-paper hover:bg-pen whitespace-nowrap"
+        >
+          Trailblazer Studio
+        </Link>
+      </div>
 
       {loading ? (
         <p className="text-muted text-sm">Loading...</p>
@@ -103,7 +113,7 @@ function TrailblazerGrid({ trailblazers, myUserId, onFollowChange }) {
           key={t.id}
           className="border-2 border-ink bg-panel p-5 flex flex-col items-center text-center"
         >
-          <Link href={`/members/${t.id}`} className="flex flex-col items-center group">
+          <Link href={`/trailblazers/${t.id}`} className="flex flex-col items-center group">
             <Avatar src={t.avatar_url} name={t.name} size="lg" />
             <h2 className="font-display font-semibold text-sm mt-3 group-hover:text-pen">
               {t.name}
