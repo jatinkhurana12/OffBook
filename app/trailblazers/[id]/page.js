@@ -4,18 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Avatar from "../../../components/Avatar";
-import YouTubePlayer from "../../../components/YouTubePlayer";
-
-// Explicit DD/MM/YYYY, independent of the browser's locale — avoids
-// toLocaleDateString() rendering "1/8/2026" for one visitor and
-// "8/1/2026" for another on the exact same date.
-function formatLectureDate(dateString) {
-  const d = new Date(dateString);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
+import LectureCard from "../../../components/LectureCard";
 
 export default function TrailblazerProfile() {
   const { id } = useParams();
@@ -23,8 +12,13 @@ export default function TrailblazerProfile() {
   const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [myUserId, setMyUserId] = useState(null);
 
   useEffect(() => {
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((data) => setMyUserId(data.session ? data.session.id : null));
+
     fetch(`/api/members/${id}`)
       .then((r) => {
         if (r.status === 404) {
@@ -43,6 +37,14 @@ export default function TrailblazerProfile() {
       });
   }, [id]);
 
+  function handleUpdated(updated) {
+    setLectures((current) => current.map((l) => (l.id === updated.id ? { ...l, ...updated } : l)));
+  }
+
+  function handleDeleted(lectureId) {
+    setLectures((current) => current.filter((l) => l.id !== lectureId));
+  }
+
   if (notFound) {
     return (
       <div className="max-w-2xl mx-auto px-5 py-12">
@@ -56,6 +58,8 @@ export default function TrailblazerProfile() {
       </div>
     );
   }
+
+  const canManage = myUserId !== null && Number(id) === myUserId;
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
@@ -76,18 +80,13 @@ export default function TrailblazerProfile() {
       ) : (
         <div className="space-y-8">
           {lectures.map((lecture) => (
-            <article key={lecture.id} className="border-2 border-ink bg-panel p-5">
-              <h2 className="font-display text-lg font-bold mb-1 break-words">{lecture.title}</h2>
-              {lecture.description && (
-                <p className="text-muted text-sm mb-3 break-words">{lecture.description}</p>
-              )}
-              {lecture.type === "video" ? (
-                <YouTubePlayer videoId={lecture.youtube_video_id} title={lecture.title} />
-              ) : (
-                <p className="text-sm whitespace-pre-line break-words">{lecture.body}</p>
-              )}
-              <p className="text-xs text-muted mt-3">{formatLectureDate(lecture.created_at)}</p>
-            </article>
+            <LectureCard
+              key={lecture.id}
+              lecture={lecture}
+              canManage={canManage}
+              onUpdated={handleUpdated}
+              onDeleted={handleDeleted}
+            />
           ))}
         </div>
       )}
