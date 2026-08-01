@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 
-// Uploads a video straight from the browser to YouTube, bypassing our own
-// server entirely — Vercel's serverless functions cap request bodies at
-// around 4.5MB, nowhere near enough for a video file. Flow:
-//   1. Ask our API for a YouTube resumable upload session URL.
-//   2. PUT the file bytes directly to that URL, tracking progress.
-//   3. YouTube's response includes the new video's ID — save the lecture.
+// Uploads a video in small chunks, relayed through our own server to
+// YouTube — NOT a direct browser-to-YouTube PUT. That's a deliberate
+// change: YouTube's upload endpoint doesn't return CORS headers a
+// browser is allowed to read, so a direct browser upload actually
+// succeeds on YouTube's side (the video lands on the channel) while the
+// browser still reports a failed connection, since it's blocked from
+// reading the confirmation back. Routing through our own same-origin API
+// sidesteps CORS entirely — see app/api/trailblazers/lectures/upload-chunk
+// and lib/youtube.js for the server side of this.
+//
+// Chunking (rather than one giant request) also means a single hiccup
+// only costs one small chunk, not the whole upload, and keeps every
+// individual request comfortably under Vercel's 4.5MB body limit.
 export default function VideoUploadForm({ onPosted }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -46,7 +53,7 @@ export default function VideoUploadForm({ onPosted }) {
       const initData = await initRes.json();
       if (!initRes.ok) throw new Error(initData.error || "Couldn't start the upload.");
 
-      const videoId = await uploadWithProgress(initData.uploadUrl, file, setProgress);
+      const videoId = await uploadInChunks(initData.uploadUrl, file, setProgress);
 
       setStatus("processing");
       const postRes = await fetch("/api/trailblazers/lectures", {
@@ -134,33 +141,106 @@ export default function VideoUploadForm({ onPosted }) {
   );
 }
 
-// XHR (not fetch) so we get upload progress events — fetch still can't
-// reliably report request-body progress across browsers.
-function uploadWithProgress(uploadUrl, file, setProgress) {
+// 4MB per chunk: a multiple of the 256KB YouTube's resumable protocol
+// requires, and comfortably under Vercel's 4.5MB per-request body limit
+// once relayed through our own /upload-chunk route.
+const CHUNK_SIZE = 4 * 1024 * 1024;
+const MAX_RETRIES_PER_CHUNK = 5;
+
+async function uploadInChunks(uploadUrl, file, setProgress) {
+  const total = file.size;
+  let offset = 0;
+  let attempt = 0;
+
+  while (offset < total) {
+    const end = Math.min(offset + CHUNK_SIZE, total);
+    const chunk = file.slice(offset, end);
+
+    try {
+      const result = await sendChunk(uploadUrl, chunk, offset, total, file.type);
+      attempt = 0; // a clean chunk resets the backoff counter
+
+      if (result.done) {
+        setProgress(100);
+        return result.videoId;
+      }
+      offset = result.nextOffset;
+      setProgress(Math.round((offset / total) * 100));
+    } catch (err) {
+      attempt++;
+      if (attempt > MAX_RETRIES_PER_CHUNK) {
+        throw new Error(
+          `Upload kept failing around ${Math.round((offset / total) * 100)}%. ${err.message || ""}`
+        );
+      }
+      // Ask our server to check how much YouTube actually has before
+      // retrying — a "failed" chunk sometimes partially landed.
+      try {
+        offset = await queryOffset(uploadUrl, total);
+        setProgress(Math.round((offset / total) * 100));
+      } catch {
+        // Couldn't even check — just retry from the same offset.
+      }
+      await new Promise((r) => setTimeout(r, 1000 * attempt)); // simple backoff
+    }
+  }
+
+  throw new Error("Upload finished sending bytes but YouTube never confirmed completion.");
+}
+
+// Sends one chunk to OUR server (same-origin — no CORS involved at all),
+// which then relays it to YouTube server-side.
+function sendChunk(uploadUrl, chunk, start, total, mimeType) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("PUT", uploadUrl, true);
-    xhr.setRequestHeader("Content-Type", file.type);
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        setProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
+    xhr.open("POST", "/api/trailblazers/lectures/upload-chunk", true);
+    xhr.setRequestHeader("X-Upload-Url", uploadUrl);
+    xhr.setRequestHeader("X-Chunk-Start", String(start));
+    xhr.setRequestHeader("X-File-Total", String(total));
+    xhr.setRequestHeader("X-Mime-Type", mimeType);
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
 
     xhr.onload = () => {
+      let data;
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        reject(new Error("Unexpected response while uploading this chunk."));
+        return;
+      }
       if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          resolve(data.id);
-        } catch {
-          reject(new Error("YouTube didn't return a video ID."));
-        }
+        resolve(data);
       } else {
-        reject(new Error(`Upload failed (${xhr.status}). Try again.`));
+        reject(new Error(data.error || `Upload chunk failed (status ${xhr.status}).`));
       }
     };
-    xhr.onerror = () => reject(new Error("Network error during upload."));
-    xhr.send(file);
+    xhr.onerror = () => reject(new Error("Network error reaching OffBook's server."));
+    xhr.send(chunk);
+  });
+}
+
+// Asks our server to check YouTube's actual received-bytes count.
+function queryOffset(uploadUrl, total) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/trailblazers/lectures/upload-chunk", true);
+    xhr.setRequestHeader("X-Upload-Url", uploadUrl);
+    xhr.setRequestHeader("X-File-Total", String(total));
+    xhr.setRequestHeader("X-Query-Only", "true");
+
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(data.nextOffset);
+        } else {
+          reject(new Error(data.error || "Couldn't check upload status."));
+        }
+      } catch {
+        reject(new Error("Couldn't check upload status."));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Network error checking upload status."));
+    xhr.send();
   });
 }
