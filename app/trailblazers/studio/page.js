@@ -96,7 +96,7 @@ export default function TrailblazerStudio() {
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
       <h1 className="font-display text-2xl font-bold mb-2">Trailblazer Studio</h1>
-      <p className="text-muted text-sm mb-8">Post an article or a video lecture. NOTE THAT CONTENT UPLOADING TAKES TIME PROPORTIONAL TO THE SIZE OF THE CONTENT. Your patience is appreciated. </p>
+      <p className="text-muted text-sm mb-8">Post an article or a video lecture. NOTE THAT UPLOADING CONTENT TAKES TIME PROPORTIONAL TO THE SIZE OF THE CONTENT. Your patience is appreciated. </p>
 
       <div className="flex gap-2 mb-6">
         <button
