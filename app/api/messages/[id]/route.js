@@ -1,6 +1,7 @@
 const { query } = require("../../../../lib/db");
 const { getSession } = require("../../../../lib/auth");
 const { sendPushToUser } = require("../../../../lib/push");
+const { deleteAttachment } = require("../../../../lib/blob");
 import { NextResponse } from "next/server";
 
 // GET the full message history between the logged-in user and :id, and mark
@@ -54,13 +55,26 @@ export async function DELETE(request, { params }) {
   const otherId = Number(params.id);
   if (!otherId) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
-  await query(
+  const updated = await query(
     `UPDATE messages
      SET deleted_by_sender = CASE WHEN sender_id = $1 THEN TRUE ELSE deleted_by_sender END,
          deleted_by_recipient = CASE WHEN recipient_id = $1 THEN TRUE ELSE deleted_by_recipient END
-     WHERE (sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1)`,
+     WHERE (sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1)
+     RETURNING id, attachment_url, deleted_by_sender, deleted_by_recipient`,
     [session.id, otherId]
   );
+
+  // Rows now marked deleted on both sides are gone for good — hard-delete
+  // them and clean up any attachments right away instead of waiting for
+  // the 72-hour cleanup job.
+  const fullyDeleted = updated.rows.filter((row) => row.deleted_by_sender && row.deleted_by_recipient);
+  if (fullyDeleted.length) {
+    await query(
+      "DELETE FROM messages WHERE id = ANY($1::int[])",
+      [fullyDeleted.map((row) => row.id)]
+    );
+    await Promise.all(fullyDeleted.map((row) => deleteAttachment(row.attachment_url)));
+  }
 
   return NextResponse.json({ ok: true });
 }

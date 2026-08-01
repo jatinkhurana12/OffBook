@@ -1,5 +1,7 @@
 const { query } = require("../../../lib/db");
 const { getSession, clearSessionCookie, createSessionCookie } = require("../../../lib/auth");
+const { deleteVideo } = require("../../../lib/youtube");
+const { deleteAttachment } = require("../../../lib/blob");
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -83,11 +85,38 @@ export async function DELETE() {
   const session = getSession();
   if (!session) return NextResponse.json({ error: "You need to log in first." }, { status: 401 });
 
-  // ON DELETE CASCADE on profiles/problems/comments/internships/problem_votes
-  // means this one query cleans up everything tied to the account.
+  // Gather everything this account has stored OUTSIDE the database — YouTube
+  // videos and Blob attachments — before the cascading delete below removes
+  // the rows that point to them. Once those rows are gone we'd have no way
+  // to find these files again.
+  const ownedVideos = await query(
+    "SELECT youtube_video_id FROM lectures WHERE user_id = $1 AND type = 'video' AND youtube_video_id IS NOT NULL",
+    [session.id]
+  );
+  const ownedAttachments = await query(
+    `SELECT DISTINCT attachment_url FROM messages
+     WHERE (sender_id = $1 OR recipient_id = $1) AND attachment_url IS NOT NULL`,
+    [session.id]
+  );
+
+  // ON DELETE CASCADE on profiles/problems/comments/internships/problem_votes/
+  // lectures/messages/follows/push_subscriptions means this one query cleans
+  // up everything tied to the account in the database.
   await query("DELETE FROM users WHERE id = $1", [session.id]);
 
   clearSessionCookie();
+
+  // Best-effort cleanup of external storage now that the DB rows referencing
+  // them are gone. Failures are logged, not thrown — account deletion has
+  // already succeeded from the user's point of view either way.
+  await Promise.all([
+    ...ownedVideos.rows.map((row) =>
+      deleteVideo(row.youtube_video_id).catch((err) =>
+        console.error("[profile DELETE] YouTube cleanup failed:", err)
+      )
+    ),
+    ...ownedAttachments.rows.map((row) => deleteAttachment(row.attachment_url)),
+  ]);
 
   return NextResponse.json({ ok: true });
 }
