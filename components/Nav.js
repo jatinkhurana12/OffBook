@@ -184,7 +184,7 @@ useEffect(() => {
                     }`}
                     onClick={closeMenu}
                   >
-                    <span aria-hidden="true"></span> Glossary
+                    Glossary
                   </Link>
                   <div
                     style={itemStyle()}
