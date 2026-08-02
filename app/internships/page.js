@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Avatar from "../../components/Avatar";
+import GlossaryButton from "../../components/GlossaryButton";
 
 export default function Internships() {
   const [internships, setInternships] = useState([]);
@@ -10,6 +11,13 @@ export default function Internships() {
   const [skill, setSkill] = useState("");
   const [minPayment, setMinPayment] = useState("");
   const [loading, setLoading] = useState(true);
+  const [myUserId, setMyUserId] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((data) => setMyUserId(data.session ? data.session.id : null));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -112,7 +120,12 @@ export default function Internships() {
                     </h2>
                     <p className="text-sm text-muted mt-0.5">{i.organization}</p>
                   </div>
-                  <PaymentBadge internship={i} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    {myUserId !== null && (
+                      <GlossaryButton itemType="internship" itemId={i.id} />
+                    )}
+                    <PaymentBadge internship={i} />
+                  </div>
                 </div>
                 <p className="text-muted text-sm mt-3 line-clamp-2">{i.description}</p>
                 <div className="flex items-center gap-4 mt-4 text-xs text-muted font-medium flex-wrap">

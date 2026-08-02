@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import VoteButtons from "../../../components/VoteButtons";
 import Avatar from "../../../components/Avatar";
+import GlossaryButton from "../../../components/GlossaryButton";
 
 const POLL_MS = 6000;
 
@@ -90,6 +91,7 @@ export default function ProblemDetail() {
           <div className="flex items-center gap-3">
             <span className="font-display text-xs uppercase bg-ink text-paper px-2 py-1">{problem.domain}</span>
             <span className="font-display text-xs uppercase text-pen">{problem.severity}</span>
+            {myUserId !== null && <GlossaryButton itemType="problem" itemId={problem.id} />}
           </div>
           {isOwner && (
             <div className="flex items-center gap-3 text-xs font-display uppercase tracking-wide">

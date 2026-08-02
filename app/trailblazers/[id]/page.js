@@ -86,6 +86,7 @@ export default function TrailblazerProfile() {
               canManage={canManage}
               onUpdated={handleUpdated}
               onDeleted={handleDeleted}
+              showGlossary={myUserId !== null}
             />
           ))}
         </div>

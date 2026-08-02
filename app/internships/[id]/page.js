@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Avatar from "../../../components/Avatar";
+import GlossaryButton from "../../../components/GlossaryButton";
 
 export default function InternshipDetail() {
   const { id } = useParams();
@@ -63,7 +64,10 @@ export default function InternshipDetail() {
             <p className="text-muted mt-1">{internship.organization}</p>
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
-            <PaymentBadge internship={internship} />
+            <div className="flex items-center gap-2">
+              {myUserId !== null && <GlossaryButton itemType="internship" itemId={internship.id} />}
+              <PaymentBadge internship={internship} />
+            </div>
             {isOwner && (
               <div className="flex items-center gap-3 text-xs font-display uppercase tracking-wide">
                 <Link href={`/internships/${id}/edit`} className="text-muted hover:text-ink">

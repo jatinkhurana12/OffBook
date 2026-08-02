@@ -176,6 +176,16 @@ useEffect(() => {
                       </span>
                     )}
                   </Link>
+                  <Link
+                    href="/glossary"
+                    style={itemStyle()}
+                    className={`nav-link w-fit text-ink hover:text-cobalt transition-all duration-300 flex items-center gap-2 ${
+                      menuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+                    }`}
+                    onClick={closeMenu}
+                  >
+                    <span aria-hidden="true">❖</span> Glossary
+                  </Link>
                   <div
                     style={itemStyle()}
                     className={`border-t border-line -mx-5 px-5 pt-4 flex items-center justify-between transition-all duration-300 ${

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import VoteButtons from "../../components/VoteButtons";
 import Avatar from "../../components/Avatar";
+import GlossaryButton from "../../components/GlossaryButton";
 
 const DOMAINS = ["all", "consumer", "b2b", "fintech", "healthcare", "education", "climate", "other"];
 const SEVERITY_LABEL = {
@@ -20,9 +21,16 @@ const SEVERITY_COLOR = {
 const POLL_MS = 8000;
 
 export default function Dashboard() {
-  const [problems, setProblems] = useState([]);
+const [problems, setProblems] = useState([]);
   const [domain, setDomain] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [myUserId, setMyUserId] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((data) => setMyUserId(data.session ? data.session.id : null));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,9 +99,12 @@ export default function Dashboard() {
               <Link href={`/problems/${p.id}`}>
                 <div className="flex items-start justify-between gap-4">
                   <h2 className="font-display font-semibold text-lg leading-snug">{p.title}</h2>
-                  <span className={`font-display text-xs uppercase whitespace-nowrap ${SEVERITY_COLOR[p.severity] || ""}`}>
-                    {SEVERITY_LABEL[p.severity] || p.severity}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`font-display text-xs uppercase whitespace-nowrap ${SEVERITY_COLOR[p.severity] || ""}`}>
+                      {SEVERITY_LABEL[p.severity] || p.severity}
+                    </span>
+                    {myUserId !== null && <GlossaryButton itemType="problem" itemId={p.id} />}
+                  </div>
                 </div>
                 <p className="text-muted text-sm mt-2 line-clamp-2">{p.description}</p>
               </Link>

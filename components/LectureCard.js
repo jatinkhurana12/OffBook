@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import YouTubePlayer from "./YouTubePlayer";
+import GlossaryButton from "./GlossaryButton";
 
 // Explicit DD/MM/YYYY, independent of the browser's locale.
 function formatLectureDate(dateString) {
@@ -12,7 +13,7 @@ function formatLectureDate(dateString) {
   return `${day}/${month}/${year}`;
 }
 
-export default function LectureCard({ lecture, canManage, onUpdated, onDeleted }) {
+export default function LectureCard({ lecture, canManage, onUpdated, onDeleted, showGlossary }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(lecture.title);
   const [description, setDescription] = useState(lecture.description || "");
@@ -141,7 +142,10 @@ export default function LectureCard({ lecture, canManage, onUpdated, onDeleted }
   return (
     <article className="border-2 border-ink bg-panel p-5">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="font-display text-lg font-bold mb-1 break-words">{lecture.title}</h2>
+        <div className="flex items-center gap-3 min-w-0">
+          {showGlossary && <GlossaryButton itemType="lecture" itemId={lecture.id} />}
+          <h2 className="font-display text-lg font-bold mb-1 break-words">{lecture.title}</h2>
+        </div>
         {canManage && (
           <div className="flex gap-2 shrink-0">
             <button
