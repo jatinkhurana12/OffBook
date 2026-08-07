@@ -11,6 +11,25 @@ export const metadata = {
   title: "Offbook — built by people the system wrote off",
   description:
     "A community for ambitious high school and college dropouts to trade real problems, find collaborators, and build without a degree.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Offbook",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport = {
+  themeColor: "#080B14",
 };
 
 export default async function RootLayout({ children }) {
