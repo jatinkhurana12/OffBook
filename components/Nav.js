@@ -1,5 +1,6 @@
 "use client";
 
+import InstallApp from "./InstallApp";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 import PushNotifications from "./PushNotifications";
@@ -61,6 +62,7 @@ useEffect(() => {
         </Link>
 
         <div className="flex items-center gap-3">
+          <InstallApp />
           {session && <PushNotifications />}
           {session ? (
             <Link
