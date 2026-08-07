@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 // Small header button that offers to install Offbook to the user's Home
 // Screen. On Chrome/Edge/Android we capture the browser's install prompt
@@ -80,58 +81,61 @@ export default function InstallApp() {
         <DownloadIcon />
       </button>
 
-      {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <button
-            aria-hidden="true"
-            tabIndex={-1}
-            onClick={handleCancel}
-            className="fixed inset-0 cursor-default bg-paper/60 backdrop-blur-sm"
-          />
-          <div className="relative w-full max-w-xs glass shadow-panel p-4 text-sm animate-fade-up">
-            <p className="text-ink font-display font-bold mb-1">Install Offbook</p>
+      {showPopup &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <button
+              aria-hidden="true"
+              tabIndex={-1}
+              onClick={handleCancel}
+              className="fixed inset-0 cursor-default bg-paper/60 backdrop-blur-sm"
+            />
+            <div className="relative w-full max-w-xs glass shadow-panel p-4 text-sm animate-fade-up">
+              <p className="text-ink font-display font-bold mb-1">Install Offbook</p>
 
-            {platform === "android" ? (
-              <>
-                <p className="text-muted text-xs mb-3">
-                  Add Offbook to your Home Screen for quick, full-screen access — no browser
-                  bar, just the app.
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAllow}
-                    className="flex-1 bg-ink text-paper px-3 py-2 font-display text-xs uppercase tracking-wider hover:shadow-glow-sm transition-all duration-300"
-                  >
-                    Allow
-                  </button>
+              {platform === "android" ? (
+                <>
+                  <p className="text-muted text-xs mb-3">
+                    Add Offbook to your Home Screen for quick, full-screen access — no browser
+                    bar, just the app.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAllow}
+                      className="flex-1 bg-ink text-paper px-3 py-2 font-display text-xs uppercase tracking-wider hover:shadow-glow-sm transition-all duration-300"
+                    >
+                      Allow
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="flex-1 border border-line text-muted px-3 py-2 font-display text-xs uppercase tracking-wider hover:border-cobalt hover:text-cobalt transition-all duration-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-muted text-xs mb-3">
+                    To install: tap the Share icon in Safari, then choose &ldquo;Add to Home
+                    Screen&rdquo;.
+                  </p>
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="flex-1 border border-line text-muted px-3 py-2 font-display text-xs uppercase tracking-wider hover:border-cobalt hover:text-cobalt transition-all duration-300"
+                    className="w-full border border-line text-ink px-3 py-2 font-display text-xs uppercase tracking-wider hover:border-cobalt hover:text-cobalt transition-all duration-300"
                   >
-                    Cancel
+                    Got it
                   </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-muted text-xs mb-3">
-                  To install: tap the Share icon in Safari, then choose &ldquo;Add to Home
-                  Screen&rdquo;.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="w-full border border-line text-ink px-3 py-2 font-display text-xs uppercase tracking-wider hover:border-cobalt hover:text-cobalt transition-all duration-300"
-                >
-                  Got it
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+                </>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
